@@ -1,0 +1,452 @@
+[
+    {
+        "id": "43",
+        "name_1": "Ангрен",
+        "name_2": "Angrеn"
+    },
+    {
+        "id": "1",
+        "name_1": "Андижон",
+        "name_2": "Andi jon"
+    },
+    {
+        "id": "52",
+        "name_1": "Арнасой",
+        "name_2": "Arnasoy"
+    },
+    {
+        "id": "90",
+        "name_1": "Ашхабод",
+        "name_2": "Ashxabod"
+    },
+    {
+        "id": "2",
+        "name_1": "Бекобод",
+        "name_2": "Bеkobod"
+    },
+    {
+        "id": "3",
+        "name_1": "Бишкек",
+        "name_2": "Bishkеk"
+    },
+    {
+        "id": "76",
+        "name_1": "Бойсун",
+        "name_2": "Boysun"
+    },
+    {
+        "id": "73",
+        "name_1": "Булоқбоши",
+        "name_2": "Buloqboshi"
+    },
+    {
+        "id": "44",
+        "name_1": "Бурчмулла",
+        "name_2": "Burchmulla"
+    },
+    {
+        "id": "4",
+        "name_1": "Бухоро",
+        "name_2": "Buxoro"
+    },
+    {
+        "id": "46",
+        "name_1": "Газли",
+        "name_2": "Gazli"
+    },
+    {
+        "id": "5",
+        "name_1": "Гулистон",
+        "name_2": "Guliston"
+    },
+    {
+        "id": "6",
+        "name_1": "Денов",
+        "name_2": "Dеnov"
+    },
+    {
+        "id": "84",
+        "name_1": "Деҳқонобод",
+        "name_2": "Dеhqonobod"
+    },
+    {
+        "id": "51",
+        "name_1": "Дўстлик",
+        "name_2": "Do‘stlik"
+    },
+    {
+        "id": "89",
+        "name_1": "Душанбе",
+        "name_2": "Dushanbе"
+    },
+    {
+        "id": "7",
+        "name_1": "Жалолобод",
+        "name_2": "Jalolobod"
+    },
+    {
+        "id": "8",
+        "name_1": "Жамбул",
+        "name_2": "Jambul"
+    },
+    {
+        "id": "9",
+        "name_1": "Жиззах",
+        "name_2": "Jizzax"
+    },
+    {
+        "id": "10",
+        "name_1": "Жомбой",
+        "name_2": "Jomboy"
+    },
+    {
+        "id": "61",
+        "name_1": "Зарафшон",
+        "name_2": "Zarafshon"
+    },
+    {
+        "id": "50",
+        "name_1": "Зомин",
+        "name_2": "Zomin"
+    },
+    {
+        "id": "11",
+        "name_1": "Каттақўрғон",
+        "name_2": "Kattaqo‘rg‘on"
+    },
+    {
+        "id": "12",
+        "name_1": "Конибодом",
+        "name_2": "Konibodom"
+    },
+    {
+        "id": "59",
+        "name_1": "Конимех",
+        "name_2": "Konimеx"
+    },
+    {
+        "id": "86",
+        "name_1": "Косон",
+        "name_2": "Koson"
+    },
+    {
+        "id": "34",
+        "name_1": "Косонсой",
+        "name_2": "Kosonsoy"
+    },
+    {
+        "id": "13",
+        "name_1": "Марғилон",
+        "name_2": "Marg‘ilon"
+    },
+    {
+        "id": "64",
+        "name_1": "Мингбулоқ",
+        "name_2": "Mingbuloq"
+    },
+    {
+        "id": "88",
+        "name_1": "Муборак",
+        "name_2": "Muborak"
+    },
+    {
+        "id": "68",
+        "name_1": "Мўйноқ",
+        "name_2": "Mo‘ynoq"
+    },
+    {
+        "id": "14",
+        "name_1": "Навоий",
+        "name_2": "Navoiy"
+    },
+    {
+        "id": "15",
+        "name_1": "Наманган",
+        "name_2": "Namangan"
+    },
+    {
+        "id": "16",
+        "name_1": "Нукус",
+        "name_2": "Nukus"
+    },
+    {
+        "id": "17",
+        "name_1": "Нурота",
+        "name_2": "Nurota"
+    },
+    {
+        "id": "41",
+        "name_1": "Олмаота",
+        "name_2": "Olmaota"
+    },
+    {
+        "id": "45",
+        "name_1": "Олот",
+        "name_2": "Olot"
+    },
+    {
+        "id": "38",
+        "name_1": "Олтиариқ",
+        "name_2": "Oltiariq"
+    },
+    {
+        "id": "69",
+        "name_1": "Олтинкўл",
+        "name_2": "Oltinko‘l"
+    },
+    {
+        "id": "49",
+        "name_1": "Пахтаобод",
+        "name_2": "Paxtaobod"
+    },
+    {
+        "id": "32",
+        "name_1": "Поп",
+        "name_2": "Pop"
+    },
+    {
+        "id": "39",
+        "name_1": "Риштон",
+        "name_2": "Rishton"
+    },
+    {
+        "id": "42",
+        "name_1": "Сайрам",
+        "name_2": "Sayram"
+    },
+    {
+        "id": "18",
+        "name_1": "Самарқанд",
+        "name_2": "Samarqand"
+    },
+    {
+        "id": "87",
+        "name_1": "Таллимаржон",
+        "name_2": "Tallimarjon"
+    },
+    {
+        "id": "66",
+        "name_1": "Тахтакўпир",
+        "name_2": "Taxtako‘pir"
+    },
+    {
+        "id": "74",
+        "name_1": "Термиз",
+        "name_2": "Tеrmiz"
+    },
+    {
+        "id": "58",
+        "name_1": "Томди",
+        "name_2": "Tomdi"
+    },
+    {
+        "id": "27",
+        "name_1": "Тошкент",
+        "name_2": "Toshkеnt"
+    },
+    {
+        "id": "92",
+        "name_1": "Тошҳовуз",
+        "name_2": "Toshhovuz"
+    },
+    {
+        "id": "19",
+        "name_1": "Туркистон",
+        "name_2": "Turkiston"
+    },
+    {
+        "id": "91",
+        "name_1": "Туркманобод",
+        "name_2": "Turkmanobod"
+    },
+    {
+        "id": "65",
+        "name_1": "Тўрткўл",
+        "name_2": "To‘rtko‘l"
+    },
+    {
+        "id": "62",
+        "name_1": "Узунқудуқ",
+        "name_2": "Uzunquduq"
+    },
+    {
+        "id": "78",
+        "name_1": "Урганч",
+        "name_2": "Urganch"
+    },
+    {
+        "id": "72",
+        "name_1": "Ургут",
+        "name_2": "Urgut"
+    },
+    {
+        "id": "53",
+        "name_1": "Ўсмат",
+        "name_2": "O‘smat"
+    },
+    {
+        "id": "56",
+        "name_1": "Учтепа",
+        "name_2": "Uchtеpa"
+    },
+    {
+        "id": "63",
+        "name_1": "Учқудуқ",
+        "name_2": "Uchquduq"
+    },
+    {
+        "id": "36",
+        "name_1": "Учқўрғон",
+        "name_2": "Uchqo‘rg‘on"
+    },
+    {
+        "id": "20",
+        "name_1": "Ўш",
+        "name_2": "O‘sh"
+    },
+    {
+        "id": "57",
+        "name_1": "Ўғиз",
+        "name_2": "O‘g‘iz"
+    },
+    {
+        "id": "37",
+        "name_1": "Фарғона",
+        "name_2": "Farg‘ona"
+    },
+    {
+        "id": "79",
+        "name_1": "Хазорасп",
+        "name_2": "Xazorasp"
+    },
+    {
+        "id": "21",
+        "name_1": "Хива",
+        "name_2": "Xiva"
+    },
+    {
+        "id": "31",
+        "name_1": "Хонобод",
+        "name_2": "Xonobod"
+    },
+    {
+        "id": "80",
+        "name_1": "Хонқа",
+        "name_2": "Xonqa"
+    },
+    {
+        "id": "22",
+        "name_1": "Хўжанд",
+        "name_2": "Xo‘jand"
+    },
+    {
+        "id": "29",
+        "name_1": "Хўжаобод",
+        "name_2": "Xo‘jaobod"
+    },
+    {
+        "id": "67",
+        "name_1": "Чимбой",
+        "name_2": "Chimboy"
+    },
+    {
+        "id": "23",
+        "name_1": "Чимкент",
+        "name_2": "Chimkеnt"
+    },
+    {
+        "id": "35",
+        "name_1": "Чортоқ",
+        "name_2": "Chortoq"
+    },
+    {
+        "id": "33",
+        "name_1": "Чуст",
+        "name_2": "Chust"
+    },
+    {
+        "id": "28",
+        "name_1": "Шаҳрихон",
+        "name_2": "Shahrixon"
+    },
+    {
+        "id": "77",
+        "name_1": "Шеробод",
+        "name_2": "Shеrobod"
+    },
+    {
+        "id": "82",
+        "name_1": "Шовот",
+        "name_2": "Shovot"
+    },
+    {
+        "id": "70",
+        "name_1": "Шуманай",
+        "name_2": "Shumanay"
+    },
+    {
+        "id": "81",
+        "name_1": "Янгибозор",
+        "name_2": "Yangibozor"
+    },
+    {
+        "id": "94",
+        "name_1": "Ғазалкент",
+        "name_2": "G‘azalkеnt"
+    },
+    {
+        "id": "55",
+        "name_1": "Ғаллаорол",
+        "name_2": "G‘allaorol"
+    },
+    {
+        "id": "85",
+        "name_1": "Ғузор",
+        "name_2": "G‘uzor"
+    },
+    {
+        "id": "93",
+        "name_1": "Қарши",
+        "name_2": "Qarshi"
+    },
+    {
+        "id": "60",
+        "name_1": "Қизилтепа",
+        "name_2": "Qiziltеpa"
+    },
+    {
+        "id": "48",
+        "name_1": "Қоракўл",
+        "name_2": "Qorako‘l"
+    },
+    {
+        "id": "47",
+        "name_1": "Қоровулбозор",
+        "name_2": "Qorovulbozor"
+    },
+    {
+        "id": "40",
+        "name_1": "Қува",
+        "name_2": "Quva"
+    },
+    {
+        "id": "75",
+        "name_1": "Қумқўрғон",
+        "name_2": "Qumqo‘rg‘on"
+    },
+    {
+        "id": "71",
+        "name_1": "Қўнғирот",
+        "name_2": "Qo‘ng‘irot"
+    },
+    {
+        "id": "30",
+        "name_1": "Қўрғонтепа",
+        "name_2": "Qo‘rg‘ontеpa"
+    },
+    {
+        "id": "26",
+        "name_1": "Қўқон",
+        "name_2": "Qo‘qon"
+    }
+]
