@@ -1,8 +1,8 @@
 import { Bot, CallbackQueryContext, CommandContext, Context, InlineKeyboard, webhookCallback } from 'grammy';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { jobs } from './scheduler/send.js';
+import { getData } from './scheduler/get-data.js';
+import { cronJob } from './scheduler/send.js';
 import regions from './data/cities.json';
-import './scheduler/get-data.js';
 
 interface Env {
 	BOT_TOKEN?: string;
@@ -147,8 +147,6 @@ export default {
 		const bot = new Bot(BOT_TOKEN);
 		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-		jobs(bot, supabase);
-
 		bot.command('start', async (ctx) => {
 			const [user]: User[] = await saveUser(supabase, ctx);
 
@@ -263,5 +261,27 @@ export default {
 		if (request.method !== 'POST') return new Response('Hello world');
 
 		return webhookCallback(bot, 'cloudflare-mod')(request);
+	},
+
+	async scheduled(controller, env, ctx) {
+		console.log('Scheduled fired:', controller.cron, 'at', new Date(controller.scheduledTime).toISOString());
+
+		const BOT_TOKEN = env.BOT_TOKEN as string;
+		const SUPABASE_URL = env.SUPABASE_URL as string;
+		const SUPABASE_KEY = env.SUPABASE_KEY as string;
+
+		const bot = new Bot(BOT_TOKEN);
+		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+		if (controller.cron === '1 0 * * *') {
+			await getData();
+		} else if (controller.cron === '2 0 * * *') {
+			await cronJob(bot, supabase, 0);
+		} else if (controller.cron === '0 1-23 * * *') {
+			const hour = new Date(controller.scheduledTime).getHours();
+			await cronJob(bot, supabase, hour);
+		} else {
+			console.log('event', new Date());
+		}
 	},
 } satisfies ExportedHandler<Env>;

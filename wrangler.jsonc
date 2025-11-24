@@ -8,6 +8,14 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2025-11-21",
   	"compatibility_flags": ["nodejs_compat"],
+	"triggers": {
+		"crons": 
+			[
+				"1 0 * * *",
+				"2 0 * * *",
+				"0 1-23 * * *",
+			]
+	},
 	"observability": {
 		"enabled": true
 	}
