@@ -1,4 +1,4 @@
-import { Bot, CallbackQueryContext, CommandContext } from 'grammy';
+import { Api, Bot, CallbackQueryContext, CommandContext, RawApi } from 'grammy';
 import { Context, InlineKeyboard, webhookCallback } from 'grammy';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
@@ -11,6 +11,7 @@ interface Env {
 	BOT_TOKEN?: string;
 	SUPABASE_URL?: string;
 	SUPABASE_KEY?: string;
+	ADMIN_CHAT_ID?: string;
 }
 
 export interface User {
@@ -30,6 +31,8 @@ type st = number | string | undefined;
 async function saveUser(
 	supabase: SupabaseClient<any, 'public', 'public', any, any>,
 	ctx: CommandContext<Context> | CallbackQueryContext<Context>,
+	bot: Bot<Context, Api<RawApi>>,
+	ADMIN_CHAT_ID: string | number,
 	data?: { city?: st; time?: st; language?: st; is_active?: boolean }
 ): Promise<User[]> {
 	const user = ctx.from;
@@ -48,6 +51,21 @@ async function saveUser(
 	if (data && typeof data.is_active === 'boolean') userData.is_active = data.is_active;
 
 	try {
+		const { data: existingUser } = await supabase
+			.from('users_namoz_vaqtlari_bot')
+			.select('tg_id')
+			.eq('tg_id', userData.tg_id)
+			.maybeSingle();
+
+		if (!existingUser)
+			await bot.api.sendMessage(
+				ADMIN_CHAT_ID,
+				`🆕 Yangi foydalanuvchi:\n\n` +
+					`👤 Ism: ${user.first_name || "Noma'lum"} ${user.last_name || ''}\n` +
+					`🔗 Username: ${user.username ? `@${user.username}` : "Noma'lum"}\n` +
+					`🆔 ID: ${user.id}`
+			);
+
 		const { data: upsertedData, error } = await supabase
 			.from('users_namoz_vaqtlari_bot')
 			.upsert(userData, { onConflict: 'tg_id' })
@@ -155,14 +173,15 @@ export default {
 		const BOT_TOKEN = env.BOT_TOKEN;
 		const SUPABASE_URL = env.SUPABASE_URL;
 		const SUPABASE_KEY = env.SUPABASE_KEY;
+		const ADMIN_CHAT_ID = env.ADMIN_CHAT_ID;
 
-		if (!BOT_TOKEN || !SUPABASE_URL || !SUPABASE_KEY) return new Response('Bot not working!', { status: 400 });
+		if (!BOT_TOKEN || !SUPABASE_URL || !SUPABASE_KEY || !ADMIN_CHAT_ID) return new Response('Bot not working!', { status: 400 });
 
 		const bot = new Bot(BOT_TOKEN);
 		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 		bot.command('start', async (ctx) => {
-			const [user]: User[] = await saveUser(supabase, ctx);
+			const [user]: User[] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
 			if (!user.language) await ctx.reply(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
 			else {
@@ -181,7 +200,7 @@ export default {
 		bot.callbackQuery(/lang_(2|1)/, async (ctx) => {
 			const language = ctx.callbackQuery.data.split('_')[1];
 
-			const [user] = await saveUser(supabase, ctx, { language });
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { language });
 
 			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
 			else {
@@ -202,7 +221,7 @@ export default {
 		bot.callbackQuery(/region_(\d+)/, async (ctx) => {
 			const city = ctx.callbackQuery.data.split('_')[1];
 
-			const [user] = await saveUser(supabase, ctx, { city });
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { city });
 
 			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
 			else {
@@ -227,7 +246,7 @@ export default {
 		bot.callbackQuery(/list_(\d+)/, async (ctx) => {
 			const index = Number(ctx.callbackQuery.data.split('_')[1]);
 
-			const [user] = await saveUser(supabase, ctx);
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
 			const lang = Number(user.language) === 2 ? 2 : 1;
 			const keyboards = RESPONSES.SELECT_REGION.MARKS[lang];
@@ -237,7 +256,7 @@ export default {
 		});
 
 		bot.callbackQuery(/vaqt/, async (ctx) => {
-			const [user] = await saveUser(supabase, ctx);
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 			const lang = Number(user.language) === 2 ? 2 : 1;
 
 			await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
@@ -250,7 +269,7 @@ export default {
 		bot.callbackQuery(/time_(\d+)/, async (ctx) => {
 			const time = ctx.callbackQuery.data.split('_')[1];
 
-			const [user] = await saveUser(supabase, ctx, { time });
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { time });
 
 			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
 			else {
@@ -275,7 +294,7 @@ export default {
 		bot.callbackQuery(/subscribe_(true|false)/, async (ctx) => {
 			const is_active = ctx.callbackQuery.data.split('_')[1] === 'true';
 
-			const [user] = await saveUser(supabase, ctx, { is_active });
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { is_active });
 
 			const lang = Number(user.language) === 2 ? 2 : 1;
 			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
