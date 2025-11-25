@@ -63,7 +63,9 @@ async function saveUser(
 				`🆕 Yangi foydalanuvchi:\n\n` +
 					`👤 Ism: ${user.first_name || "Noma'lum"} ${user.last_name || ''}\n` +
 					`🔗 Username: ${user.username ? `@${user.username}` : "Noma'lum"}\n` +
-					`🆔 ID: ${user.id}`
+					`🆔 ID: ${user.id}\n` +
+					`🚪 UTM Source: -\n` +
+					`🤖 Bot: @bugun_namoz_bot`
 			);
 
 		const { data: upsertedData, error } = await supabase
