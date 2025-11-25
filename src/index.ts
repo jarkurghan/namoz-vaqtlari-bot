@@ -1,7 +1,10 @@
-import { Bot, CallbackQueryContext, CommandContext, Context, InlineKeyboard, webhookCallback } from 'grammy';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Bot, CallbackQueryContext, CommandContext } from 'grammy';
+import { Context, InlineKeyboard, webhookCallback } from 'grammy';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { getData } from './scheduler/get-data.js';
 import { cronJob } from './scheduler/send.js';
+import { ParseMode } from '@grammyjs/types';
 import regions from './data/cities.json';
 
 interface Env {
@@ -19,6 +22,7 @@ export interface User {
 	city?: number | string;
 	time?: number | string;
 	language?: number | string;
+	is_active?: boolean;
 }
 
 type st = number | string | undefined;
@@ -26,7 +30,7 @@ type st = number | string | undefined;
 async function saveUser(
 	supabase: SupabaseClient<any, 'public', 'public', any, any>,
 	ctx: CommandContext<Context> | CallbackQueryContext<Context>,
-	data?: { city?: st; time?: st; language?: st }
+	data?: { city?: st; time?: st; language?: st; is_active?: boolean }
 ): Promise<User[]> {
 	const user = ctx.from;
 	if (!user) return [];
@@ -40,7 +44,8 @@ async function saveUser(
 
 	if (data && data.language) userData.language = data.language;
 	if (data && data.city) userData.city = data.city;
-	if (data && data.time) userData.time = data.time;
+	if (data && (typeof data.time === 'number' || typeof data.time === 'string')) userData.time = data.time;
+	if (data && typeof data.is_active === 'boolean') userData.is_active = data.is_active;
 
 	try {
 		const { data: upsertedData, error } = await supabase
@@ -60,10 +65,10 @@ async function saveUser(
 function getTimeKeyboard() {
 	const keyboard = new InlineKeyboard();
 
-	for (let i = 0; i < 24; i++) {
+	for (let i = 1; i < 24; i++) {
 		const hour = i.toString().padStart(2, '0');
 		keyboard.text(`${hour}:00`, `time_${hour}`);
-		if ((i + 1) % 4 === 0) keyboard.row();
+		if (i % 4 === 0) keyboard.row();
 	}
 
 	return keyboard;
@@ -102,20 +107,29 @@ function getRegionKeyboard(lang: number) {
 	return keyboards;
 }
 
-function getSettingsKeyboard(lang: number) {
+function getSettingsKeyboard(lang: number, is_active?: boolean) {
+	const langText = lang === 1 ? 'Тилни ўзгартириш' : "Tilni o'zgartirish";
+	const regionText = lang === 1 ? 'Ҳудудни ўзгартириш' : "Hududni o'zgartirish";
+	const timeText = lang === 1 ? 'Юбориш вақтини ўзгартириш' : "Yuborish vaqtini o'zgartirish";
+	const subText = lang === 1 ? (is_active ? 'Обунани тўхтатиш' : 'Обунани тиклаш') : is_active ? 'Obunani toʻxtatish' : 'Obunani tiklash';
+
 	const keyboard = new InlineKeyboard();
-	keyboard.text(lang === 1 ? 'Тилни ўзгартириш' : "Tilni o'zgartirish", `language`).row();
-	keyboard.text(lang === 1 ? 'Ҳудудни ўзгартириш' : "Hududni o'zgartirish", `list_0`).row();
-	keyboard.text(lang === 1 ? 'Юбориш вақти' : 'Yuborish vaqti', `vaqt`).row();
-	return { reply_markup: keyboard };
+	keyboard.text(langText, `language`).row();
+	keyboard.text(regionText, `list_0`).row();
+	keyboard.text(timeText, `vaqt`).row();
+	keyboard.text(subText, `subscribe_${!is_active}`).row();
+
+	return { reply_markup: keyboard, parse_mode: 'HTML' as ParseMode };
 }
 
 function getSettingsMessage(user: User) {
 	const city = regions.find((e) => e.id == user.city) as { id: string; name_1: string; name_2: string };
 	const hour = (user.time as number).toString().padStart(2, '0');
 	return user.language === 2
-		? `Hozirgi sozlamalar:\n\n` + 'Til: 🇺🇿 Oʻzbekcha\n' + `Hudud: ${city.name_2}\n` + `Tarqatma vaqti: ${hour}:00`
-		: 'Ҳозирги созламалар:\n\n' + 'Тил: 🇺🇿 Ўзбекча\n' + `Ҳудуд: ${city.name_1}\n` + `Тарқатма вақти: ${hour}:00`;
+		? `Har kuni soat <b>${hour}:00</b>da sizga ${city.name_2} vaqti bo‘yicha kunlik namoz vaqtlari yuboriladi.` +
+				`${user.is_active ? '' : '\n\nEslatma: Siz hozirda obunani toʻxtatgansiz, namoz vaqtlari yuborilmaydi.'}`
+		: `Ҳар куни соат <b>${hour}:00</b>да сизга ${city.name_1} вақти бўйича кунлик намоз вақтлари юборилади.` +
+				`${user.is_active ? '' : '\n\nЭслатма: Сиз ҳозирда обунани тўхтатгансиз, намоз вақтлари юборилмайди.'}`;
 }
 
 const RESPONSES = {
@@ -159,7 +173,7 @@ export default {
 				} else if (!user.time) {
 					await ctx.reply(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
 				} else {
-					await ctx.reply(getSettingsMessage(user), getSettingsKeyboard(lang));
+					await ctx.reply(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
 				}
 			}
 		});
@@ -178,7 +192,7 @@ export default {
 				} else if (!user.time) {
 					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
 				} else {
-					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang));
+					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
 				}
 			}
 
@@ -199,7 +213,7 @@ export default {
 				} else if (!user.time) {
 					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
 				} else {
-					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang));
+					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
 				}
 			}
 
@@ -247,7 +261,7 @@ export default {
 				} else if (!user.time) {
 					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
 				} else {
-					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang));
+					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
 				}
 			}
 
@@ -258,14 +272,33 @@ export default {
 			}
 		});
 
+		bot.callbackQuery(/subscribe_(true|false)/, async (ctx) => {
+			const is_active = ctx.callbackQuery.data.split('_')[1] === 'true';
+
+			const [user] = await saveUser(supabase, ctx, { is_active });
+
+			const lang = Number(user.language) === 2 ? 2 : 1;
+			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
+			else {
+				if (!user.city) {
+					await ctx.editMessageText(RESPONSES.SELECT_REGION.MESSAGE[lang], RESPONSES.SELECT_REGION.MARKS[lang][0]);
+				} else if (!user.time) {
+					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
+				} else {
+					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, is_active));
+				}
+			}
+
+			const text = lang === 2 ? (is_active ? 'Obuna tiklandi' : "Obuna to'xtatildi") : is_active ? 'Обуна тикланди' : 'Обуна тўхтатилди';
+			await ctx.answerCallbackQuery({ text });
+		});
+
 		if (request.method !== 'POST') return new Response('Hello world');
 
 		return webhookCallback(bot, 'cloudflare-mod')(request);
 	},
 
 	async scheduled(controller, env, ctx) {
-		console.log('Scheduled fired:', controller.cron, 'at', new Date(controller.scheduledTime).toISOString());
-
 		const BOT_TOKEN = env.BOT_TOKEN as string;
 		const SUPABASE_URL = env.SUPABASE_URL as string;
 		const SUPABASE_KEY = env.SUPABASE_KEY as string;
@@ -273,15 +306,14 @@ export default {
 		const bot = new Bot(BOT_TOKEN);
 		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-		if (controller.cron === '1 0 * * *') {
-			await getData();
-		} else if (controller.cron === '2 0 * * *') {
-			await cronJob(bot, supabase, 0);
-		} else if (controller.cron === '0 1-23 * * *') {
-			const hour = new Date(controller.scheduledTime).getHours();
+		if (controller.cron === '0 0-18,20-23 * * *') {
+			const hour = parseInt(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent', hour: '2-digit', hour12: false }));
 			await cronJob(bot, supabase, hour);
+		} else if (controller.cron === '1-6 19 * * *') {
+			const minute = new Date(controller.scheduledTime).getUTCMinutes();
+			await getData(supabase, minute - 1);
 		} else {
-			console.log('event', new Date());
+			console.log('event: ', new Date());
 		}
 	},
 } satisfies ExportedHandler<Env>;

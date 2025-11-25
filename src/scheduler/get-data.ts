@@ -1,13 +1,8 @@
 import * as cheerio from 'cheerio';
+import { SupabaseClient } from '@supabase/supabase-js';
 import regions from '../data/cities.json';
 import parser from '../data/parser.json';
 import axios from 'axios';
-import fs from 'node:fs';
-
-type PrayerTimesData = {
-	date: { '1': string; '2': string };
-	prayerTimes: Record<string, string[]>;
-};
 
 const TARGET_URL = 'https://islom.uz';
 type HijriMonth =
@@ -72,8 +67,7 @@ const parseDate = (dateStr: string) => {
 	};
 };
 
-
-async function handler(cities: string[], month: number | string) {
+async function handler(supabase: SupabaseClient<any, 'public', 'public', any, any>, cities: string[], month: number | string) {
 	try {
 		const { data: home } = await axios.get(TARGET_URL);
 		const $home = cheerio.load(home);
@@ -81,7 +75,6 @@ async function handler(cities: string[], month: number | string) {
 		const dateClassName = '.date_time';
 		const dateElement = $home(dateClassName);
 		const date = parseDate(dateElement.text().trim());
-		const prayerTimes: Record<string, string[]> = {};
 
 		for (let i = 0; i < cities.length; i++) {
 			const { data: table } = await axios.get(TARGET_URL + '/vaqtlar/' + cities[i] + '/' + month);
@@ -96,21 +89,34 @@ async function handler(cities: string[], month: number | string) {
 				nowTimes.push(timeText);
 			});
 
-			prayerTimes[cities[i]] = nowTimes;
+			const record = {
+				city: cities[i],
+				date_text_cyrl: date[1],
+				date_text_uz: date[2],
+				tong: nowTimes[0],
+				quyosh: nowTimes[1],
+				peshin: nowTimes[2],
+				asr: nowTimes[3],
+				shom: nowTimes[4],
+				xufton: nowTimes[5],
+			};
+
+			const { error } = await supabase.from('prayer_times').upsert(record, { onConflict: 'city' });
+			if (error) console.error(`Xato yuz berdi (${cities[i]}):`, error.message);
 		}
 
-		await fs.promises.writeFile('./src/data/data.json', JSON.stringify({ date, prayerTimes }, null, 4), 'utf-8');
 		return;
 	} catch (error) {
 		console.error(error);
 	}
 }
 
-export async function getData() {
+export async function getData(supabase: SupabaseClient<any, 'public', 'public', any, any>, part: number) {
 	const nowTashkent = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent' });
 	const month = nowTashkent.slice(0, nowTashkent.indexOf('/'));
-	const cities = regions.map((e) => e.id);
-	await handler(cities, month);
+	const cities = regions.map((e) => e.id).slice(part * 15, (part + 1) * 15);
+
+	await handler(supabase, cities, month);
 
 	console.log('noted ✅');
 	return;
