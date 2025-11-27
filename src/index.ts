@@ -3,7 +3,7 @@ import { Context, InlineKeyboard, webhookCallback } from 'grammy';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { getData } from './scheduler/get-data.js';
-import { cronJob } from './scheduler/send.js';
+import { cronJob, makeMessage } from './scheduler/send.js';
 import { ParseMode } from '@grammyjs/types';
 import regions from './data/cities.json';
 
@@ -51,11 +51,7 @@ async function saveUser(
 	if (data && typeof data.is_active === 'boolean') userData.is_active = data.is_active;
 
 	try {
-		const { data: existingUser } = await supabase
-			.from('users_namoz_vaqtlari_bot')
-			.select('tg_id')
-			.eq('tg_id', userData.tg_id)
-			.maybeSingle();
+		const { data: existingUser } = await supabase.from('prayer_time_users').select('tg_id').eq('tg_id', userData.tg_id).maybeSingle();
 
 		if (!existingUser)
 			await bot.api.sendMessage(
@@ -68,10 +64,7 @@ async function saveUser(
 					`🤖 Bot: @bugun_namoz_bot`
 			);
 
-		const { data: upsertedData, error } = await supabase
-			.from('users_namoz_vaqtlari_bot')
-			.upsert(userData, { onConflict: 'tg_id' })
-			.select('*');
+		const { data: upsertedData, error } = await supabase.from('prayer_time_users').upsert(userData, { onConflict: 'tg_id' }).select('*');
 
 		if (error) console.error('Supabasega saqlashda xato:', error);
 
@@ -82,7 +75,7 @@ async function saveUser(
 	}
 }
 
-function getTimeKeyboard() {
+function getTimeKeyboard(lang: number) {
 	const keyboard = new InlineKeyboard();
 
 	for (let i = 1; i < 24; i++) {
@@ -91,43 +84,52 @@ function getTimeKeyboard() {
 		if (i % 4 === 0) keyboard.row();
 	}
 
+	keyboard.row();
+	keyboard.text(lang === 2 ? 'Ortga qaytish' : 'Ортга қайтиш', `settings`).row();
+
 	return keyboard;
 }
 
-function getRegionKeyboard(lang: number) {
-	const keyboards = [];
-	const pageSize = 12;
-	const pageCount = Math.ceil(regions.length / pageSize);
+function getVilsKeyboard(lang: number) {
+	const keyboard = new InlineKeyboard();
+	const key = ('viloyat_' + lang) as 'viloyat_1' | 'viloyat_2';
 
-	for (let page = 0; page < pageCount; page++) {
-		const keyboard = new InlineKeyboard();
-		const start = page * pageSize;
-		const end = start + pageSize;
-
-		for (let i = start; i < end && regions[i]; i += 2) {
-			if (regions[i + 1])
-				keyboard
-					.text(lang === 2 ? regions[i].name_2 : regions[i].name_1, `region_${regions[i].id}`)
-					.text(lang === 2 ? regions[i + 1].name_2 : regions[i + 1].name_1, `region_${regions[i + 1].id}`)
-					.row();
-			else keyboard.text(lang === 2 ? regions[i].name_2 : regions[i].name_1, `region_${regions[i].id}`).row();
+	const viloyatlarMap = new Map<string, { [key]: string; viloyat_code: string }>();
+	regions.forEach((item) => {
+		if (!viloyatlarMap.has(item.viloyat_code)) {
+			viloyatlarMap.set(item.viloyat_code, { [key]: item[key], viloyat_code: item.viloyat_code });
 		}
+	});
+	const vil = Array.from(viloyatlarMap.values());
 
-		if (page === 0) keyboard.text(lang === 2 ? 'Keyingi' : 'Кейинги', `list_${page + 1}`).row();
-		else if (page === pageCount - 1) keyboard.text(lang === 2 ? 'Oldingi' : 'Олдинги', `list_${page - 1}`).row();
-		else
-			keyboard
-				.text(lang === 2 ? 'Oldingi' : 'Олдинги', `list_${page - 1}`)
-				.text(lang === 2 ? 'Keyingi' : 'Кейинги', `list_${page + 1}`)
-				.row();
-
-		keyboards.push({ reply_markup: keyboard });
+	for (let i = 0; i < vil.length; i++) {
+		const button = keyboard.text(vil[i][key], `vil_${vil[i].viloyat_code}`);
+		if (i % 2 !== 0 || i === vil.length - 1) button.row();
 	}
 
-	return keyboards;
+	const backText = lang === 2 ? 'Ortga qaytish' : 'Ортга қайтиш';
+	keyboard.text(backText, `settings`).row();
+
+	return keyboard;
 }
 
-function getSettingsKeyboard(lang: number, is_active?: boolean) {
+function getRegsKeyboard(lang: number, vil_code: number) {
+	const keyboard = new InlineKeyboard();
+	const key = lang === 2 ? 'name_2' : 'name_1';
+	const regs = [...new Set(regions.filter((item) => item.viloyat_code === String(vil_code)))];
+
+	for (let i = 0; i < regs.length; i++) {
+		const button = keyboard.text(regs[i][key], `reg_${regs[i].id}`);
+		if (i % 2 !== 0 || i === regs.length - 1) button.row();
+	}
+
+	const backText = lang === 2 ? 'Ortga qaytish' : 'Ортга қайтиш';
+	keyboard.text(backText, `vils`).row();
+
+	return keyboard;
+}
+
+function getSettingsKeyboard(lang: number, is_active: boolean) {
 	const langText = lang === 1 ? 'Тилни ўзгартириш' : "Tilni o'zgartirish";
 	const regionText = lang === 1 ? 'Ҳудудни ўзгартириш' : "Hududni o'zgartirish";
 	const timeText = lang === 1 ? 'Юбориш вақтини ўзгартириш' : "Yuborish vaqtini o'zgartirish";
@@ -135,14 +137,23 @@ function getSettingsKeyboard(lang: number, is_active?: boolean) {
 
 	const keyboard = new InlineKeyboard();
 	keyboard.text(langText, `language`).row();
-	keyboard.text(regionText, `list_0`).row();
+	keyboard.text(regionText, `vils`).row();
 	keyboard.text(timeText, `vaqt`).row();
 	keyboard.text(subText, `subscribe_${!is_active}`).row();
+	keyboard.text(lang === 2 ? 'Ortga qaytish' : 'Ортга қайтиш', `dashboard`).row();
 
-	return { reply_markup: keyboard, parse_mode: 'HTML' as ParseMode };
+	return keyboard;
 }
 
-function getSettingsMessage(user: User) {
+function getDashboardKeyboard(lang: number) {
+	const keyboard = new InlineKeyboard();
+	keyboard.text(lang === 1 ? 'Бугунги намоз вақтлари' : 'Bugungi namoz vaqtlari', `prayertime`).row();
+	keyboard.text(lang === 1 ? '⚙️ Созламалар' : '⚙️ Sozlamalar', `settings`).row();
+
+	return keyboard;
+}
+
+function getDashboardMessage(user: User) {
 	const city = regions.find((e) => e.id == user.city) as { id: string; name_1: string; name_2: string };
 	const hour = (user.time as number).toString().padStart(2, '0');
 	return user.language === 2
@@ -152,23 +163,67 @@ function getSettingsMessage(user: User) {
 				`${user.is_active ? '' : '\n\nЭслатма: Сиз ҳозирда обунани тўхтатгансиз, намоз вақтлари юборилмайди.'}`;
 }
 
-const RESPONSES = {
+function getSettingsMessage(user: User) {
+	const city = regions.find((e) => e.id == user.city) as { id: string; name_1: string; name_2: string };
+	const hour = (user.time as number).toString().padStart(2, '0');
+
+	return user.language === 2
+		? `Hozirgi sozlamalar:\n\n` +
+				'Til: 🇺🇿 Oʻzbekcha\n' +
+				`Hudud: ${city.name_2}\n` +
+				`Tarqatma vaqti: ${hour}:00` +
+				`${user.is_active ? '' : "\nTarqatma holati: O'chirilgan"}`
+		: 'Ҳозирги созламалар:\n\n' +
+				'Тил: 🇺🇿 Ўзбекча\n' +
+				`Ҳудуд: ${city.name_1}\n` +
+				`Тарқатма вақти: ${hour}:00` +
+				`${user.is_active ? '' : '\nТарқатма ҳолати: Ўчирилган'}`;
+}
+
+const MESSAGES = {
 	SELECT_LANG: {
-		MESSAGE: 'Iltimos, tilni tanlang!\nИлтимос, тилни танланг:',
-		MARKS: { reply_markup: new InlineKeyboard().text('🇺🇿 Oʻzbekcha', 'lang_2').text('🇺🇿 Ўзбекча', 'lang_1') },
+		2: 'Iltimos, tilni tanlang!\nИлтимос, тилни танланг:',
+		1: 'Iltimos, tilni tanlang!\nИлтимос, тилни танланг:',
 	},
 	SELECT_TIME: {
-		MESSAGE: {
-			2: 'Kunlik namoz vaqtlari qaysi vaqtda yuborilishini xohlaysiz?',
-			1: 'Кунлик намоз вақтлари қайси вақтда юборилишини хоҳлайсиз?',
-		},
-		MARKS: { reply_markup: getTimeKeyboard() },
+		2: 'Kunlik namoz vaqtlari qaysi vaqtda yuborilishini xohlaysiz?',
+		1: 'Кунлик намоз вақтлари қайси вақтда юборилишини хоҳлайсиз?',
 	},
 	SELECT_REGION: {
-		MESSAGE: { 2: 'Hududni tanlang', 1: 'Ҳудудни танланг' },
-		MARKS: { 2: getRegionKeyboard(2), 1: getRegionKeyboard(1) },
+		2: 'Hududni tanlang',
+		1: 'Ҳудудни танланг',
 	},
+	SETTINGS: getSettingsMessage,
+	DASHBOARD: getDashboardMessage,
 };
+
+type paramsType =
+	| { key: 'lang'; lang?: number }
+	| { key: 'time'; lang: number }
+	| { key: 'vil'; lang: number }
+	| { key: 'reg'; lang: number; vil: number }
+	| { key: 'settings'; lang: number; is_active: boolean }
+	| { key: 'dashboard'; lang: number };
+
+function makeMarks(options: paramsType): { reply_markup: InlineKeyboard; parse_mode: ParseMode } {
+	switch (options.key) {
+		case 'lang':
+			const back = options.lang === 2 ? 'Ortga qaytish' : options.lang === 1 ? 'Ортга қайтиш' : 'Ortga qaytish / Ортга қайтиш';
+			const marks = new InlineKeyboard().text('🇺🇿 Oʻzbekcha', 'lang_2').text('🇺🇿 Ўзбекча', 'lang_1').row();
+			marks.text(back, `settings`).row();
+			return { reply_markup: marks, parse_mode: 'HTML' };
+		case 'time':
+			return { reply_markup: getTimeKeyboard(options.lang), parse_mode: 'HTML' };
+		case 'vil':
+			return { reply_markup: getVilsKeyboard(options.lang), parse_mode: 'HTML' };
+		case 'reg':
+			return { reply_markup: getRegsKeyboard(options.lang, options.vil), parse_mode: 'HTML' };
+		case 'settings':
+			return { reply_markup: getSettingsKeyboard(options.lang, options.is_active), parse_mode: 'HTML' };
+		case 'dashboard':
+			return { reply_markup: getDashboardKeyboard(options.lang), parse_mode: 'HTML' };
+	}
+}
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
@@ -185,16 +240,16 @@ export default {
 		bot.command('start', async (ctx) => {
 			const [user]: User[] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
-			if (!user.language) await ctx.reply(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
+			if (!user.language) await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
 			else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.reply(RESPONSES.SELECT_REGION.MESSAGE[lang], RESPONSES.SELECT_REGION.MARKS[lang][0]);
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.reply(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.reply(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
+					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
 				}
 			}
 		});
@@ -204,37 +259,75 @@ export default {
 
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { language });
 
-			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
-			else {
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.editMessageText(RESPONSES.SELECT_REGION.MESSAGE[lang], RESPONSES.SELECT_REGION.MARKS[lang][0]);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
 				}
 			}
 
 			await ctx.answerCallbackQuery({ text: language === '2' ? 'Lotincha tanlandi' : 'Кириллча танланди' });
 		});
 
-		bot.callbackQuery(/region_(\d+)/, async (ctx) => {
+		bot.callbackQuery(/vils/, async (ctx) => {
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
+
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
+				const lang = Number(user.language) === 2 ? 2 : 1;
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+			}
+		});
+
+		bot.callbackQuery(/vil_(\d+)/, async (ctx) => {
+			const vil_code = ctx.callbackQuery.data.split('_')[1];
+
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
+
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
+				const lang = Number(user.language) === 2 ? 2 : 1;
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'reg', lang, vil: Number(vil_code) }));
+			}
+		});
+
+		bot.callbackQuery(/reg_(\d+)/, async (ctx) => {
 			const city = ctx.callbackQuery.data.split('_')[1];
 
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { city });
 
-			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
-			else {
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.editMessageText(RESPONSES.SELECT_REGION.MESSAGE[lang], RESPONSES.SELECT_REGION.MARKS[lang][0]);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
 				}
 			}
 
@@ -245,27 +338,62 @@ export default {
 			}
 		});
 
-		bot.callbackQuery(/list_(\d+)/, async (ctx) => {
-			const index = Number(ctx.callbackQuery.data.split('_')[1]);
-
+		bot.callbackQuery(/settings/, async (ctx) => {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
-			const lang = Number(user.language) === 2 ? 2 : 1;
-			const keyboards = RESPONSES.SELECT_REGION.MARKS[lang];
-			const keyboard = Array.isArray(keyboards) ? keyboards[index] : keyboards;
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
+				const lang = Number(user.language) === 2 ? 2 : 1;
 
-			await ctx.editMessageText(RESPONSES.SELECT_REGION.MESSAGE[lang], keyboard);
+				if (!user.city) {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+				} else if (!user.time) {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+				} else {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SETTINGS(user), makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
+				}
+			}
+		});
+
+		bot.callbackQuery(/dashboard/, async (ctx) => {
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
+
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
+				const lang = Number(user.language) === 2 ? 2 : 1;
+
+				if (!user.city) {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+				} else if (!user.time) {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+				} else {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+				}
+			}
 		});
 
 		bot.callbackQuery(/vaqt/, async (ctx) => {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 			const lang = Number(user.language) === 2 ? 2 : 1;
-
-			await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
+			await ctx.deleteMessage();
+			await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
 		});
 
 		bot.callbackQuery(/language/, async (ctx) => {
-			await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
+			const lang = Number(user.language) === 2 ? 2 : 1;
+			await ctx.deleteMessage();
+			await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang', lang }));
 		});
 
 		bot.callbackQuery(/time_(\d+)/, async (ctx) => {
@@ -273,16 +401,21 @@ export default {
 
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { time });
 
-			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
-			else {
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.editMessageText(RESPONSES.SELECT_REGION.MESSAGE[lang], RESPONSES.SELECT_REGION.MARKS[lang][0]);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, user.is_active));
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
 				}
 			}
 
@@ -299,19 +432,49 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { is_active });
 
 			const lang = Number(user.language) === 2 ? 2 : 1;
-			if (!user.language) await ctx.editMessageText(RESPONSES.SELECT_LANG.MESSAGE, RESPONSES.SELECT_LANG.MARKS);
-			else {
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
 				if (!user.city) {
-					await ctx.editMessageText(RESPONSES.SELECT_REGION.MESSAGE[lang], RESPONSES.SELECT_REGION.MARKS[lang][0]);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.editMessageText(RESPONSES.SELECT_TIME.MESSAGE[lang], RESPONSES.SELECT_TIME.MARKS);
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.editMessageText(getSettingsMessage(user), getSettingsKeyboard(lang, is_active));
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SETTINGS(user), makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
 				}
 			}
 
 			const text = lang === 2 ? (is_active ? 'Obuna tiklandi' : "Obuna to'xtatildi") : is_active ? 'Обуна тикланди' : 'Обуна тўхтатилди';
 			await ctx.answerCallbackQuery({ text });
+		});
+
+		bot.callbackQuery(/prayertime/, async (ctx) => {
+			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
+
+			if (!user.language) {
+				await ctx.deleteMessage();
+				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			} else {
+				const lang = Number(user.language) === 2 ? 2 : 1;
+
+				if (!user.city) {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+				} else if (!user.time) {
+					await ctx.deleteMessage();
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+				} else {
+					const { data: userTime } = await supabase.from('prayer_times').select('*').eq('city', user.city);
+					const message = makeMessage(lang, userTime?.[0]);
+					await ctx.deleteMessage();
+					await ctx.reply(message, { parse_mode: 'HTML' });
+					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+				}
+			}
 		});
 
 		if (request.method !== 'POST') return new Response('Hello world');
@@ -330,8 +493,10 @@ export default {
 		if (controller.cron === '0 0-18,20-23 * * *') {
 			const hour = parseInt(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent', hour: '2-digit', hour12: false }));
 			await cronJob(bot, supabase, hour);
-		} else if (controller.cron === '1-6 19 * * *') {
+		} else if (controller.cron === '1-10 19 * * *') {
 			const minute = new Date(controller.scheduledTime).getUTCMinutes();
+			console.log(minute);
+			
 			await getData(supabase, minute - 1);
 		} else {
 			console.log('event: ', new Date());

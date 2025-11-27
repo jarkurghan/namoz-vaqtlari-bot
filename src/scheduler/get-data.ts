@@ -114,7 +114,7 @@ async function handler(supabase: SupabaseClient<any, 'public', 'public', any, an
 export async function getData(supabase: SupabaseClient<any, 'public', 'public', any, any>, part: number) {
 	const nowTashkent = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent' });
 	const month = nowTashkent.slice(0, nowTashkent.indexOf('/'));
-	const cities = regions.map((e) => e.id).slice(part * 15, (part + 1) * 15);
+	const cities = regions.map((e) => e.id).slice(part * 9, (part + 1) * 9);
 
 	await handler(supabase, cities, month);
 
