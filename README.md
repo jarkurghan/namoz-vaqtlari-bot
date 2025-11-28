@@ -62,7 +62,7 @@
 
 ### 3. Environment Variables
 
-Cloudflare Workers loyihangizda quyidagi atrof-muhit o'zgaruvchilarini sozlang:
+Cloudflare Workers loyihangizda quyidagi environment variable'larini sozlang:
 
 | O'zgaruvchi     | Tavsif                                                           |
 | :-------------- | :--------------------------------------------------------------- |
