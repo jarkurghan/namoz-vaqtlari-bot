@@ -33,7 +33,7 @@ async function saveUser(
 	ctx: CommandContext<Context> | CallbackQueryContext<Context>,
 	bot: Bot<Context, Api<RawApi>>,
 	ADMIN_CHAT_ID: string | number,
-	data?: { city?: st; time?: st; language?: st; is_active?: boolean }
+	data?: { city?: st; time?: st; language?: st; is_active?: boolean; utm?: string }
 ): Promise<User[]> {
 	const user = ctx.from;
 	if (!user) return [];
@@ -53,16 +53,18 @@ async function saveUser(
 	try {
 		const { data: existingUser } = await supabase.from('prayer_time_users').select('tg_id').eq('tg_id', userData.tg_id).maybeSingle();
 
-		if (!existingUser)
+		if (!existingUser) {
+			const utm = data?.utm || '-';
 			await bot.api.sendMessage(
 				ADMIN_CHAT_ID,
 				`🆕 Yangi foydalanuvchi:\n\n` +
 					`👤 Ism: ${user.first_name || "Noma'lum"} ${user.last_name || ''}\n` +
 					`🔗 Username: ${user.username ? `@${user.username}` : "Noma'lum"}\n` +
 					`🆔 ID: ${user.id}\n` +
-					`🚪 UTM Source: -\n` +
-					`🤖 Bot: @bugun_namoz_bot`
+					`🚪 UTM Source: ${utm}\n` +
+					`🤖 Bot: @bugungi_namoz_bot`
 			);
+		}
 
 		const { data: upsertedData, error } = await supabase.from('prayer_time_users').upsert(userData, { onConflict: 'tg_id' }).select('*');
 
@@ -74,6 +76,20 @@ async function saveUser(
 		return [];
 	}
 }
+
+export const isActiveCity = async (supabase: SupabaseClient<any, 'public', 'public', any, any>, city: number): Promise<boolean> => {
+	const currentTimestamp = new Date().getTime();
+
+	const { data, error } = await supabase.from('prayer_times').select('updated_date').eq('city', city);
+	if (error) {
+		console.error(error);
+		return false;
+	}
+
+	const cityTimestamp = new Date(data[0].updated_date).getTime();
+
+	return 86400000 > currentTimestamp - cityTimestamp;
+};
 
 function getTimeKeyboard(lang: number) {
 	const keyboard = new InlineKeyboard();
@@ -145,21 +161,26 @@ function getSettingsKeyboard(lang: number, is_active: boolean) {
 	return keyboard;
 }
 
-function getDashboardKeyboard(lang: number) {
+async function getDashboardKeyboard(lang: number, city: number, supabase: SupabaseClient<any, 'public', 'public', any, any>) {
 	const keyboard = new InlineKeyboard();
-	keyboard.text(lang === 1 ? 'Бугунги намоз вақтлари' : 'Bugungi namoz vaqtlari', `prayertime`).row();
+	if (await isActiveCity(supabase, city))
+		keyboard.text(lang === 1 ? 'Бугунги намоз вақтлари' : 'Bugungi namoz vaqtlari', `prayertime`).row();
 	keyboard.text(lang === 1 ? '⚙️ Созламалар' : '⚙️ Sozlamalar', `settings`).row();
 
 	return keyboard;
 }
 
-function getDashboardMessage(user: User) {
+async function getDashboardMessage(user: User, supabase: SupabaseClient<any, 'public', 'public', any, any>) {
 	const city = regions.find((e) => e.id == user.city) as { id: string; name_1: string; name_2: string };
 	const hour = (user.time as number).toString().padStart(2, '0');
+	const is_active_city = await isActiveCity(supabase, Number(city.id));
+
 	return user.language === 2
-		? `Har kuni soat <b>${hour}:00</b>da sizga ${city.name_2} vaqti bo‘yicha kunlik namoz vaqtlari yuboriladi.` +
+		? `${is_active_city ? 'Har kuni' : 'Ertadan boshlab har kuni'}` +
+				` soat <b>${hour}:00</b>da sizga ${city.name_2} vaqti bo‘yicha kunlik namoz vaqtlari yuboriladi.` +
 				`${user.is_active ? '' : '\n\nEslatma: Siz hozirda obunani toʻxtatgansiz, namoz vaqtlari yuborilmaydi.'}`
-		: `Ҳар куни соат <b>${hour}:00</b>да сизга ${city.name_1} вақти бўйича кунлик намоз вақтлари юборилади.` +
+		: `${is_active_city ? 'Ҳар куни' : 'Эртадан бошлаб ҳар куни'}` +
+				` соат <b>${hour}:00</b>да сизга ${city.name_1} вақти бўйича кунлик намоз вақтлари юборилади.` +
 				`${user.is_active ? '' : '\n\nЭслатма: Сиз ҳозирда обунани тўхтатгансиз, намоз вақтлари юборилмайди.'}`;
 }
 
@@ -203,9 +224,9 @@ type paramsType =
 	| { key: 'vil'; lang: number }
 	| { key: 'reg'; lang: number; vil: number }
 	| { key: 'settings'; lang: number; is_active: boolean }
-	| { key: 'dashboard'; lang: number };
+	| { key: 'dashboard'; lang: number; city: number; supabase: SupabaseClient<any, 'public', 'public', any, any> };
 
-function makeMarks(options: paramsType): { reply_markup: InlineKeyboard; parse_mode: ParseMode } {
+async function makeMarks(options: paramsType): Promise<{ reply_markup: InlineKeyboard; parse_mode: ParseMode }> {
 	switch (options.key) {
 		case 'lang':
 			const back = options.lang === 2 ? 'Ortga qaytish' : options.lang === 1 ? 'Ортга қайтиш' : 'Ortga qaytish / Ортга қайтиш';
@@ -221,7 +242,7 @@ function makeMarks(options: paramsType): { reply_markup: InlineKeyboard; parse_m
 		case 'settings':
 			return { reply_markup: getSettingsKeyboard(options.lang, options.is_active), parse_mode: 'HTML' };
 		case 'dashboard':
-			return { reply_markup: getDashboardKeyboard(options.lang), parse_mode: 'HTML' };
+			return { reply_markup: await getDashboardKeyboard(options.lang, options.city, options.supabase), parse_mode: 'HTML' };
 	}
 }
 
@@ -238,18 +259,24 @@ export default {
 		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 		bot.command('start', async (ctx) => {
-			const [user]: User[] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
+			const payload = ctx.match;
+			const utm = payload.slice(payload.indexOf('utm-') + 4);
 
-			if (!user.language) await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+			const [user]: User[] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { utm });
+
+			if (!user.language) await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+					await ctx.reply(
+						await MESSAGES.DASHBOARD(user, supabase),
+						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
+					);
 				}
 			}
 		});
@@ -261,19 +288,22 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+					await ctx.reply(
+						await MESSAGES.DASHBOARD(user, supabase),
+						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
+					);
 				}
 			}
 
@@ -285,11 +315,11 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+				await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 			}
 		});
 
@@ -300,11 +330,11 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'reg', lang, vil: Number(vil_code) }));
+				await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'reg', lang, vil: Number(vil_code) }));
 			}
 		});
 
@@ -315,19 +345,22 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+					await ctx.reply(
+						await MESSAGES.DASHBOARD(user, supabase),
+						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
+					);
 				}
 			}
 
@@ -343,19 +376,19 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SETTINGS(user), makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
+					await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
 				}
 			}
 		});
@@ -365,19 +398,22 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+					await ctx.reply(
+						await MESSAGES.DASHBOARD(user, supabase),
+						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
+					);
 				}
 			}
 		});
@@ -386,14 +422,14 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 			const lang = Number(user.language) === 2 ? 2 : 1;
 			await ctx.deleteMessage();
-			await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+			await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 		});
 
 		bot.callbackQuery(/language/, async (ctx) => {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 			const lang = Number(user.language) === 2 ? 2 : 1;
 			await ctx.deleteMessage();
-			await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang', lang }));
+			await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang', lang }));
 		});
 
 		bot.callbackQuery(/time_(\d+)/, async (ctx) => {
@@ -403,19 +439,22 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+					await ctx.reply(
+						await MESSAGES.DASHBOARD(user, supabase),
+						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
+					);
 				}
 			}
 
@@ -434,17 +473,17 @@ export default {
 			const lang = Number(user.language) === 2 ? 2 : 1;
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				if (!user.city) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SETTINGS(user), makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
+					await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
 				}
 			}
 
@@ -457,22 +496,25 @@ export default {
 
 			if (!user.language) {
 				await ctx.deleteMessage();
-				await ctx.reply(MESSAGES.SELECT_LANG[1], makeMarks({ key: 'lang' }));
+				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_REGION[lang], makeMarks({ key: 'vil', lang }));
+					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
 					await ctx.deleteMessage();
-					await ctx.reply(MESSAGES.SELECT_TIME[lang], makeMarks({ key: 'time', lang }));
+					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					const { data: userTime } = await supabase.from('prayer_times').select('*').eq('city', user.city);
 					const message = makeMessage(lang, userTime?.[0]);
 					await ctx.deleteMessage();
 					await ctx.reply(message, { parse_mode: 'HTML' });
-					await ctx.reply(MESSAGES.DASHBOARD(user), makeMarks({ key: 'dashboard', lang }));
+					await ctx.reply(
+						await MESSAGES.DASHBOARD(user, supabase),
+						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
+					);
 				}
 			}
 		});
@@ -493,10 +535,10 @@ export default {
 		if (controller.cron === '0 0-18,20-23 * * *') {
 			const hour = parseInt(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent', hour: '2-digit', hour12: false }));
 			await cronJob(bot, supabase, hour);
-		} else if (controller.cron === '1-10 19 * * *') {
+		} else if (controller.cron === '1-5 19 * * *') {
 			const minute = new Date(controller.scheduledTime).getUTCMinutes();
-			console.log(minute);
-			
+			console.log('minute:', minute);
+
 			await getData(supabase, minute - 1);
 		} else {
 			console.log('event: ', new Date());

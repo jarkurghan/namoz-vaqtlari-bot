@@ -1,6 +1,5 @@
 import * as cheerio from 'cheerio';
 import { SupabaseClient } from '@supabase/supabase-js';
-import regions from '../data/cities.json';
 import parser from '../data/parser.json';
 import axios from 'axios';
 
@@ -80,7 +79,7 @@ async function handler(supabase: SupabaseClient<any, 'public', 'public', any, an
 			const { data: table } = await axios.get(TARGET_URL + '/vaqtlar/' + cities[i] + '/' + month);
 			const $table = cheerio.load(table);
 
-			const rowClassName = 'tr.p_day.bugun > td';
+			const rowClassName = '.prayer_table tr.bugun > td';
 			const nowTimes: string[] = [];
 			const tds = $table(rowClassName);
 			tds.slice(3).each((index, element) => {
@@ -99,6 +98,7 @@ async function handler(supabase: SupabaseClient<any, 'public', 'public', any, an
 				asr: nowTimes[3],
 				shom: nowTimes[4],
 				xufton: nowTimes[5],
+				updated_date: new Date().getTime(),
 			};
 
 			const { error } = await supabase.from('prayer_times').upsert(record, { onConflict: 'city' });
@@ -114,9 +114,14 @@ async function handler(supabase: SupabaseClient<any, 'public', 'public', any, an
 export async function getData(supabase: SupabaseClient<any, 'public', 'public', any, any>, part: number) {
 	const nowTashkent = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent' });
 	const month = nowTashkent.slice(0, nowTashkent.indexOf('/'));
-	const cities = regions.map((e) => e.id).slice(part * 9, (part + 1) * 9);
 
-	await handler(supabase, cities, month);
+	const { data, error } = await supabase.from('prayer_time_users').select('city').eq('is_active', true);
+	if (error) return console.error(error);
+
+	const set = [...new Set(data.map((e) => e.city))];
+	const cities = set.slice(part * 18, (part + 1) * 18);
+
+	if (cities.length) await handler(supabase, cities, month);
 
 	console.log('noted ✅');
 	return;
