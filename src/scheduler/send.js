@@ -22,7 +22,7 @@ export const cronJob = async (bot, supabase, index) => {
 			const message = makeMessage(users[i].language, userTime);
 			await bot.api.sendMessage(users[i].tg_id, message, { parse_mode: 'HTML' });
 		} catch (error) {
-			console.log(error);
+			console.error(users[i].tg_id, error);
 		}
 	}
 

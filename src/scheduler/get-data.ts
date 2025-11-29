@@ -77,33 +77,35 @@ async function handler(supabase: SupabaseClient<any, 'public', 'public', any, an
 
 		for (let i = 0; i < cities.length; i++) {
 			try {
-			const { data: table } = await axios.get(TARGET_URL + '/vaqtlar/' + cities[i] + '/' + month);
-			const $table = cheerio.load(table);
+				if (cities[i]) {
+					const { data: table } = await axios.get(TARGET_URL + '/vaqtlar/' + cities[i] + '/' + month);
+					const $table = cheerio.load(table);
 
-			const rowClassName = '.prayer_table tr.bugun > td';
-			const nowTimes: string[] = [];
-			const tds = $table(rowClassName);
-			tds.slice(3).each((index, element) => {
-				const $element = $table(element);
-				const timeText = $element.text().trim();
-				nowTimes.push(timeText);
-			});
+					const rowClassName = '.prayer_table tr.bugun > td';
+					const nowTimes: string[] = [];
+					const tds = $table(rowClassName);
+					tds.slice(3).each((index, element) => {
+						const $element = $table(element);
+						const timeText = $element.text().trim();
+						nowTimes.push(timeText);
+					});
 
-			const record = {
-				city: cities[i],
-				date_text_cyrl: date[1],
-				date_text_uz: date[2],
-				tong: nowTimes[0],
-				quyosh: nowTimes[1],
-				peshin: nowTimes[2],
-				asr: nowTimes[3],
-				shom: nowTimes[4],
-				xufton: nowTimes[5],
-				updated_date: new Date().getTime(),
-			};
+					const record = {
+						city: cities[i],
+						date_text_cyrl: date[1],
+						date_text_uz: date[2],
+						tong: nowTimes[0],
+						quyosh: nowTimes[1],
+						peshin: nowTimes[2],
+						asr: nowTimes[3],
+						shom: nowTimes[4],
+						xufton: nowTimes[5],
+						updated_date: new Date().getTime(),
+					};
 
-			const { error } = await supabase.from('prayer_times').upsert(record, { onConflict: 'city' });
-			if (error) console.error(`Xato yuz berdi (${cities[i]}):`, error.message);
+					const { error } = await supabase.from('prayer_times').upsert(record, { onConflict: 'city' });
+					if (error) console.error(`Xato yuz berdi (${cities[i]}):`, error.message);
+				}
 			} catch (error) {
 				console.error(error);
 			}
