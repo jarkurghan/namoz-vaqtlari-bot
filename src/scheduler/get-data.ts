@@ -76,6 +76,7 @@ async function handler(supabase: SupabaseClient<any, 'public', 'public', any, an
 		const date = parseDate(dateElement.text().trim());
 
 		for (let i = 0; i < cities.length; i++) {
+			try {
 			const { data: table } = await axios.get(TARGET_URL + '/vaqtlar/' + cities[i] + '/' + month);
 			const $table = cheerio.load(table);
 
@@ -103,6 +104,9 @@ async function handler(supabase: SupabaseClient<any, 'public', 'public', any, an
 
 			const { error } = await supabase.from('prayer_times').upsert(record, { onConflict: 'city' });
 			if (error) console.error(`Xato yuz berdi (${cities[i]}):`, error.message);
+			} catch (error) {
+				console.error(error);
+			}
 		}
 
 		return;
