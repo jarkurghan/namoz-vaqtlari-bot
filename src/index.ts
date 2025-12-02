@@ -92,7 +92,7 @@ export const isActiveCity = async (supabase: SupabaseClient<any, 'public', 'publ
 	return 86400000 > currentTimestamp - cityTimestamp;
 };
 
-function getTimeKeyboard(lang: number) {
+function getTimeKeyboard(lang: number, is_back?: boolean) {
 	const keyboard = new InlineKeyboard();
 
 	for (let i = 1; i < 24; i++) {
@@ -102,12 +102,12 @@ function getTimeKeyboard(lang: number) {
 	}
 
 	keyboard.row();
-	keyboard.text(lang === 2 ? 'Ortga qaytish' : 'Ортга қайтиш', `settings`).row();
+	if (is_back) keyboard.text(lang === 2 ? 'Ortga qaytish' : 'Ортга қайтиш', `settings`).row();
 
 	return keyboard;
 }
 
-function getVilsKeyboard(lang: number) {
+function getVilsKeyboard(lang: number, is_back?: boolean) {
 	const keyboard = new InlineKeyboard();
 	const key = ('viloyat_' + lang) as 'viloyat_1' | 'viloyat_2';
 
@@ -125,7 +125,7 @@ function getVilsKeyboard(lang: number) {
 	}
 
 	const backText = lang === 2 ? 'Ortga qaytish' : 'Ортга қайтиш';
-	keyboard.text(backText, `settings`).row();
+	if (is_back) keyboard.text(backText, `settings`).row();
 
 	return keyboard;
 }
@@ -221,8 +221,8 @@ const MESSAGES = {
 
 type paramsType =
 	| { key: 'lang'; lang?: number }
-	| { key: 'time'; lang: number }
-	| { key: 'vil'; lang: number }
+	| { key: 'time'; lang: number; is_back?: boolean }
+	| { key: 'vil'; lang: number; is_back?: boolean }
 	| { key: 'reg'; lang: number; vil: number }
 	| { key: 'settings'; lang: number; is_active: boolean }
 	| { key: 'dashboard'; lang: number; city: number; supabase: SupabaseClient<any, 'public', 'public', any, any> };
@@ -232,12 +232,12 @@ async function makeMarks(options: paramsType): Promise<{ reply_markup: InlineKey
 		case 'lang':
 			const back = options.lang === 2 ? 'Ortga qaytish' : options.lang === 1 ? 'Ортга қайтиш' : 'Ortga qaytish / Ортга қайтиш';
 			const marks = new InlineKeyboard().text('🇺🇿 Oʻzbekcha', 'lang_2').text('🇺🇿 Ўзбекча', 'lang_1').row();
-			marks.text(back, `settings`).row();
+			if (Boolean(options.lang)) marks.text(back, `settings`).row();
 			return { reply_markup: marks, parse_mode: 'HTML' };
 		case 'time':
-			return { reply_markup: getTimeKeyboard(options.lang), parse_mode: 'HTML' };
+			return { reply_markup: getTimeKeyboard(options.lang, options.is_back), parse_mode: 'HTML' };
 		case 'vil':
-			return { reply_markup: getVilsKeyboard(options.lang), parse_mode: 'HTML' };
+			return { reply_markup: getVilsKeyboard(options.lang, options.is_back), parse_mode: 'HTML' };
 		case 'reg':
 			return { reply_markup: getRegsKeyboard(options.lang, options.vil), parse_mode: 'HTML' };
 		case 'settings':
@@ -328,7 +328,7 @@ export default {
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 				await ctx.deleteMessage().catch((err) => console.error(err));
-				await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
+				await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang, is_back: Boolean(user.city) }));
 			}
 		});
 
@@ -431,7 +431,7 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 			const lang = Number(user.language) === 2 ? 2 : 1;
 			await ctx.deleteMessage().catch((err) => console.error(err));
-			await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
+			await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang, is_back: Boolean(user.time) }));
 		});
 
 		bot.callbackQuery(/language/, async (ctx) => {
