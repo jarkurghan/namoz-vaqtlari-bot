@@ -10,6 +10,16 @@ export const makeMessage = (language, userTime) => {
 	);
 };
 
+export async function deactivateService(supabase, tg_id) {
+	try {
+		const { error } = await supabase.from('prayer_time_users').upsert({ tg_id, is_active: false }, { onConflict: 'tg_id' }).select('*');
+		if (error) console.error(error);
+		else console.log('deactivated service for', tg_id);
+	} catch (error) {
+		console.error(error);
+	}
+}
+
 export const cronJob = async (bot, supabase, index) => {
 	const { data: users, error } = await supabase.from('prayer_time_users').select('*').eq('time', index).eq('is_active', true);
 	const { data: times, error1 } = await supabase.from('prayer_times').select('*');
@@ -22,7 +32,9 @@ export const cronJob = async (bot, supabase, index) => {
 			const message = makeMessage(users[i].language, userTime);
 			await bot.api.sendMessage(users[i].tg_id, message, { parse_mode: 'HTML' });
 		} catch (error) {
-			console.error(users[i].tg_id, error);
+			if (error.message === "Call to 'sendMessage' failed! (403: Forbidden: bot was blocked by the user)")
+				deactivateService(supabase, users[i].tg_id);
+			else console.error(error);
 		}
 	}
 

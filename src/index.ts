@@ -6,6 +6,7 @@ import { getData } from './scheduler/get-data.js';
 import { cronJob, makeMessage } from './scheduler/send.js';
 import { ParseMode } from '@grammyjs/types';
 import regions from './data/cities.json';
+import { sendOneTime } from './scheduler/no-options.js';
 
 interface Env {
 	BOT_TOKEN?: string;
@@ -246,6 +247,8 @@ async function makeMarks(options: paramsType): Promise<{ reply_markup: InlineKey
 	}
 }
 
+let flag = true;
+
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const BOT_TOKEN = env.BOT_TOKEN;
@@ -257,6 +260,12 @@ export default {
 
 		const bot = new Bot(BOT_TOKEN);
 		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+		// if (request.method === 'GET')
+		// 	if (flag === true) {
+		// 		flag = false;
+		// 		await sendOneTime(supabase, bot);
+		// 	}
 
 		bot.command('start', async (ctx) => {
 			const payload = ctx.match;
@@ -287,19 +296,19 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { language });
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(
 						await MESSAGES.DASHBOARD(user, supabase),
 						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
@@ -314,11 +323,11 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 			}
 		});
@@ -329,11 +338,11 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'reg', lang, vil: Number(vil_code) }));
 			}
 		});
@@ -344,19 +353,19 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { city });
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(
 						await MESSAGES.DASHBOARD(user, supabase),
 						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
@@ -375,19 +384,19 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
 				}
 			}
@@ -397,19 +406,19 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(
 						await MESSAGES.DASHBOARD(user, supabase),
 						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
@@ -421,14 +430,14 @@ export default {
 		bot.callbackQuery(/vaqt/, async (ctx) => {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 			const lang = Number(user.language) === 2 ? 2 : 1;
-			await ctx.deleteMessage();
+			await ctx.deleteMessage().catch((err) => console.error(err));
 			await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 		});
 
 		bot.callbackQuery(/language/, async (ctx) => {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 			const lang = Number(user.language) === 2 ? 2 : 1;
-			await ctx.deleteMessage();
+			await ctx.deleteMessage().catch((err) => console.error(err));
 			await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang', lang }));
 		});
 
@@ -438,19 +447,19 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID, { time });
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(
 						await MESSAGES.DASHBOARD(user, supabase),
 						await makeMarks({ key: 'dashboard', lang, city: Number(user.city), supabase })
@@ -472,17 +481,17 @@ export default {
 
 			const lang = Number(user.language) === 2 ? 2 : 1;
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				if (!user.city) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: 'settings', lang, is_active: Boolean(user.is_active) }));
 				}
 			}
@@ -495,21 +504,21 @@ export default {
 			const [user] = await saveUser(supabase, ctx, bot, ADMIN_CHAT_ID);
 
 			if (!user.language) {
-				await ctx.deleteMessage();
+				await ctx.deleteMessage().catch((err) => console.error(err));
 				await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: 'lang' }));
 			} else {
 				const lang = Number(user.language) === 2 ? 2 : 1;
 
 				if (!user.city) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: 'vil', lang }));
 				} else if (!user.time) {
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: 'time', lang }));
 				} else {
 					const { data: userTime } = await supabase.from('prayer_times').select('*').eq('city', user.city);
 					const message = makeMessage(lang, userTime?.[0]);
-					await ctx.deleteMessage();
+					await ctx.deleteMessage().catch((err) => console.error(err));
 					await ctx.reply(message, { parse_mode: 'HTML' });
 					await ctx.reply(
 						await MESSAGES.DASHBOARD(user, supabase),
