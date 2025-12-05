@@ -33,7 +33,7 @@ export const cronJob = async (bot, supabase, index) => {
 			await bot.api.sendMessage(users[i].tg_id, message, { parse_mode: 'HTML' });
 		} catch (error) {
 			if (error.message === "Call to 'sendMessage' failed! (403: Forbidden: bot was blocked by the user)")
-				deactivateService(supabase, users[i].tg_id);
+				await deactivateService(supabase, users[i].tg_id);
 			else console.error(error);
 		}
 	}
