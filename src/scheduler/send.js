@@ -34,6 +34,8 @@ export const cronJob = async (bot, supabase, index) => {
 		} catch (error) {
 			if (error.message === "Call to 'sendMessage' failed! (403: Forbidden: bot was blocked by the user)")
 				await deactivateService(supabase, users[i].tg_id);
+			else if (error.message === "Call to 'sendMessage' failed! (403: Forbidden: user is deactivated)")
+				await deactivateService(supabase, users[i].tg_id);
 			else console.error(error);
 		}
 	}
