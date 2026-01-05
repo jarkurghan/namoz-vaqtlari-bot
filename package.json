@@ -1,25 +1,20 @@
 {
     "name": "namoz-vaqtlari-bot",
     "version": "1.0.0",
-    "private": true,
     "scripts": {
-        "deploy": "wrangler deploy",
-        "dev": "wrangler dev",
-        "start": "wrangler dev",
-        "test": "vitest",
-        "cf-typegen": "wrangler types"
+        "dev": "bun --watch src/index.ts",
+        "start": "bun src/index.ts"
     },
     "devDependencies": {
-        "@cloudflare/vitest-pool-workers": "^0.8.19",
         "typescript": "^5.5.2",
-        "vitest": "~3.2.0",
-        "wrangler": "^4.50.0"
+        "vitest": "~3.2.0"
     },
     "dependencies": {
         "@grammyjs/types": "^3.22.2",
         "@supabase/supabase-js": "^2.84.0",
         "axios": "^1.13.2",
         "cheerio": "^1.1.2",
-        "grammy": "^1.38.4"
+        "grammy": "^1.38.4",
+        "hono": "^4.11.3"
     }
 }
