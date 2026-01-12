@@ -2,6 +2,7 @@ import { Bot } from "grammy";
 import { CTX } from "./types";
 import { User } from "./types";
 import { SaveUserData } from "./types";
+import { deactivateService } from "./send";
 import { makeMessage } from "./send";
 import { ADMIN_ID } from "./constants";
 import { LOG_CHAT } from "./constants";
@@ -472,6 +473,7 @@ bot.callbackQuery(/prayertime/, async (ctx) => {
 });
 
 bot.command("broadcast", async (ctx) => {
+    // broadcast vaqtincha ishlamaydi, ishlatish uchun: ctx.chat.id) === ADMIN_ID
     if (String(ctx.chat.id) + 11 === ADMIN_ID) {
         const msg = await bot.api.sendMessage(LOG_CHAT, "Broadcast...");
         await ctx.reply(`Broadcast started: https://t.me/c/${LOG_CHAT.slice(4)}/${msg.message_id}`);
@@ -527,6 +529,10 @@ bot.command("broadcast", async (ctx) => {
 
                     if (error instanceof GrammyError && error.description.includes("bot was blocked by the user")) {
                         await sendLog(`User ${data[i].tg_id} botni bloklagan.`, { reply_to_message_id: msg.message_id });
+                        await deactivateService(data[i].tg_id);
+                    } else if (error instanceof GrammyError && error.description.includes("user is deactivated")) {
+                        await sendLog(`User ${data[i].tg_id} deleted account qilgan.`, { reply_to_message_id: msg.message_id });
+                        await deactivateService(data[i].tg_id);
                     } else if (error instanceof Error) {
                         await sendLog(`Xatolik yuz berdi (${data[i].tg_id}): \n${error.message}`, { reply_to_message_id: msg.message_id });
                     } else {
