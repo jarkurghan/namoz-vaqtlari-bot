@@ -4,29 +4,30 @@ Bot foydalanuvchilarga har kuni ularning tanlagan hududi va vaqti bo'yicha kunli
 
 ## ✨ Xususiyatlar
 
-- **🌐 Ikki tilli interfeys:** O'zbekcha (Lotin va Kirill alifbosida) til tanlash.
-- **📍 Hudud tanlash:** Foydalanuvchi o'zi yashaydigan shaharni tanlashi mumkin.
-- **⏰ Vaqtni sozlash:** Xabarnoma yuboriladigan aniq soatni belgilash.
-- **🔄 Sozlamalarni o'zgartirish:** Til, hudud, vaqt va obuna holatini o'zgartirish.
-- **✅ Obunani boshqarish:** Xabarnomalarni to'xtatish va qayta tiklash.
-- **🛠 Notification:** Yangi foydalanuvchi haqida adminga xabar yuborish.
-- **💣 Log:** Xatolik haqida admin log chatiga xabar yuborish.
-- **🕌 Jadval bo'yicha yuborish:** Kunlik namoz vaqtlarini belgilangan vaqtda avtomatik yuborish uchun jadval (cron job) funksiyasi.
+-   **🌐 Ikki tilli interfeys:** O'zbekcha (Lotin va Kirill alifbosida) til tanlash.
+-   **📍 Hudud tanlash:** Foydalanuvchi o'zi yashaydigan shaharni tanlashi mumkin.
+-   **⏰ Vaqtni sozlash:** Xabarnoma yuboriladigan aniq soatni belgilash.
+-   **🔄 Sozlamalarni o'zgartirish:** Til, hudud, vaqt va obuna holatini o'zgartirish.
+-   **✅ Obunani boshqarish:** Xabarnomalarni to'xtatish va qayta tiklash.
+-   **🛠 Notification:** Yangi foydalanuvchi haqida adminga xabar yuborish.
+-   **💣 Log:** Xatolik haqida admin log chatiga xabar yuborish.
+-   **⏰ Broadcast:** Sozlamalar tugatilmagan userlar uchun bildirishnoma yuborish.
+-   **🕌 Jadval bo'yicha yuborish:** Kunlik namoz vaqtlarini belgilangan vaqtda avtomatik yuborish uchun jadval (cron job) funksiyasi.
 
 ## ⚙️ Texnologiyalar
 
-- **Telegram Bot API**
-- **grammY** — Telegram bot uchun.
-- **Supabase** — Ma'lumotlar bazasi.
+-   **Telegram Bot API**
+-   **grammY** — Telegram bot uchun.
+-   **Supabase** — Ma'lumotlar bazasi.
 
 ## 🚀 Loyihani Ishga Tushirish
 
 ### 1. Ishni boshlash uchun kerak:
 
-- **Node.js**
-- **bun** (yoki npm)
-- **Supabase** akkaunti
-- **Telegram Bot Token** (BotFather orqali olingan)
+-   **Node.js**
+-   **bun** (yoki npm)
+-   **Supabase** akkaunti
+-   **Telegram Bot Token** (BotFather orqali olingan)
 
 ### 2. Supabase Sozlamalari
 
@@ -64,13 +65,14 @@ Bot foydalanuvchilarga har kuni ularning tanlagan hududi va vaqti bo'yicha kunli
 
 Loyihangizda quyidagi environment variable'larini sozlang:
 
-| O'zgaruvchi     | Tavsif                                                           |
-| :-------------- | :--------------------------------------------------------------- |
-| `BOT_TOKEN`     | Telegram bot token.                                              |
-| `SUPABASE_URL`  | Supabase URL manzili.                                            |
-| `SUPABASE_KEY`  | Supabase key.                                                    |
-| `ADMIN_CHAT_ID` | Yangi foydalanuvchi haqida xabar yuborish uchun admin chat IDsi. |
-| `LOG_CHAT_ID`   | Xatolik haqida xabar yuborish uchun admin log chat IDsi.         |
+| O'zgaruvchi             | Tavsif                                                           |
+| :---------------------- | :--------------------------------------------------------------- |
+| `BOT_TOKEN`             | Telegram bot token.                                              |
+| `SUPABASE_URL`          | Supabase URL manzili.                                            |
+| `SUPABASE_KEY`          | Supabase key.                                                    |
+| `ADMIN_CHAT_ID`         | Yangi foydalanuvchi haqida xabar yuborish uchun admin chat IDsi. |
+| `ADMIN_PRIVATE_CHAT_ID` | Broadcast uchun - telegram akkount IDsi.                         |
+| `LOG_CHAT_ID`           | Xatolik haqida xabar yuborish uchun admin log chat IDsi.         |
 
 ### 4. Loyihani deploy
 
