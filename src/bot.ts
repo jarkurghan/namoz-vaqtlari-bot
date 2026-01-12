@@ -518,7 +518,7 @@ bot.command("broadcast", async (ctx) => {
                     else if (!data[i].city) keyboard.text(regionText, `vils`).row();
                     else if (!data[i].time) keyboard.text(timeText, `vaqt`).row();
 
-                    if (String(data[i].tg_id) === ADMIN_ID) await bot.api.sendMessage(data[i].tg_id, message, { reply_markup: keyboard, parse_mode: "HTML" });
+                    await bot.api.sendMessage(data[i].tg_id, message, { reply_markup: keyboard, parse_mode: "HTML" });
 
                     await new Promise((resolve) => setTimeout(resolve, 40));
                     scs.push(data[i].tg_id);
