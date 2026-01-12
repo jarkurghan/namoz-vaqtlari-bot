@@ -1,18 +1,21 @@
-import { Bot, GrammyError, HttpError } from "grammy";
+import { Bot } from "grammy";
 import { CTX } from "./types";
 import { User } from "./types";
 import { SaveUserData } from "./types";
 import { makeMessage } from "./send";
-import { ADMIN_ID, LOG_CHAT } from "./constants";
+import { ADMIN_ID } from "./constants";
+import { LOG_CHAT } from "./constants";
 import { BOT_TOKEN } from "./constants";
 import { ADMIN_CHAT } from "./constants";
 import { supabase } from "./supabase";
+import { GrammyError } from "grammy";
 import { InlineKeyboard } from "grammy";
 import { webhookCallback } from "grammy";
 import { paramsTypeOfMakeMarks } from "./types";
 import { ParseMode } from "@grammyjs/types/message";
-import regions from "./cities.json";
+import { dontDelete } from "./log";
 import { sendLog } from "./log";
+import regions from "./cities.json";
 
 if (!BOT_TOKEN) throw new Error("BOT_TOKEN topilmadi!");
 
@@ -55,8 +58,12 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
         if (error) console.error("Supabasega saqlashda xato:", error);
 
         return (upsertedData as User[]) || [];
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        if (error instanceof Error) {
+            await sendLog(`User create qilib bo'lmadi (${user.id}): \n${error.message}`);
+        } else {
+            await sendLog(`User create qilib bo'lmadi (${user.id}): \n${error}`);
+        }
         return [];
     }
 }
@@ -247,19 +254,19 @@ bot.callbackQuery(/lang_(2|1)/, async (ctx) => {
     const [user] = await saveUser(ctx, { language });
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
 
         if (!user.city) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang }));
         } else if (!user.time) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(await MESSAGES.DASHBOARD(user), await makeMarks({ key: "dashboard", lang, city: Number(user.city) }));
         }
     }
@@ -271,11 +278,11 @@ bot.callbackQuery(/vils/, async (ctx) => {
     const [user] = await saveUser(ctx);
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang, is_back: Boolean(user.city) }));
     }
 });
@@ -286,11 +293,11 @@ bot.callbackQuery(/vil_(\d+)/, async (ctx) => {
     const [user] = await saveUser(ctx);
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "reg", lang, vil: Number(vil_code) }));
     }
 });
@@ -301,19 +308,19 @@ bot.callbackQuery(/reg_(\d+)/, async (ctx) => {
     const [user] = await saveUser(ctx, { city });
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
 
         if (!user.city) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang }));
         } else if (!user.time) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(await MESSAGES.DASHBOARD(user), await makeMarks({ key: "dashboard", lang, city: Number(user.city) }));
         }
     }
@@ -329,19 +336,19 @@ bot.callbackQuery(/settings/, async (ctx) => {
     const [user] = await saveUser(ctx);
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
 
         if (!user.city) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang }));
         } else if (!user.time) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: "settings", lang, is_active: Boolean(user.is_active) }));
         }
     }
@@ -351,19 +358,19 @@ bot.callbackQuery(/dashboard/, async (ctx) => {
     const [user] = await saveUser(ctx);
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
 
         if (!user.city) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang }));
         } else if (!user.time) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(await MESSAGES.DASHBOARD(user), await makeMarks({ key: "dashboard", lang, city: Number(user.city) }));
         }
     }
@@ -372,14 +379,14 @@ bot.callbackQuery(/dashboard/, async (ctx) => {
 bot.callbackQuery(/vaqt/, async (ctx) => {
     const [user] = await saveUser(ctx);
     const lang = Number(user.language) === 2 ? 2 : 1;
-    await ctx.deleteMessage().catch((err) => console.error(err));
+    await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
     await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang, is_back: Boolean(user.time) }));
 });
 
 bot.callbackQuery(/language/, async (ctx) => {
     const [user] = await saveUser(ctx);
     const lang = Number(user.language) === 2 ? 2 : 1;
-    await ctx.deleteMessage().catch((err) => console.error(err));
+    await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
     await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang", lang }));
 });
 
@@ -389,19 +396,19 @@ bot.callbackQuery(/time_(\d+)/, async (ctx) => {
     const [user] = await saveUser(ctx, { time });
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
 
         if (!user.city) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang }));
         } else if (!user.time) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(await MESSAGES.DASHBOARD(user), await makeMarks({ key: "dashboard", lang, city: Number(user.city) }));
         }
     }
@@ -420,17 +427,17 @@ bot.callbackQuery(/subscribe_(true|false)/, async (ctx) => {
 
     const lang = Number(user.language) === 2 ? 2 : 1;
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         if (!user.city) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang }));
         } else if (!user.time) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: "settings", lang, is_active: Boolean(user.is_active) }));
         }
     }
@@ -443,21 +450,21 @@ bot.callbackQuery(/prayertime/, async (ctx) => {
     const [user] = await saveUser(ctx);
 
     if (!user.language) {
-        await ctx.deleteMessage().catch((err) => console.error(err));
+        await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
         await ctx.reply(MESSAGES.SELECT_LANG[1], await makeMarks({ key: "lang" }));
     } else {
         const lang = Number(user.language) === 2 ? 2 : 1;
 
         if (!user.city) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_REGION[lang], await makeMarks({ key: "vil", lang }));
         } else if (!user.time) {
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
             const { data: userTime } = await supabase.from("prayer_times").select("*").eq("city", user.city);
             const message = makeMessage(lang, userTime?.[0]);
-            await ctx.deleteMessage().catch((err) => console.error(err));
+            await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(message, { parse_mode: "HTML" });
             await ctx.reply(await MESSAGES.DASHBOARD(user), await makeMarks({ key: "dashboard", lang, city: Number(user.city) }));
         }
@@ -534,6 +541,12 @@ bot.command("broadcast", async (ctx) => {
     } else {
         await bot.api.sendMessage(LOG_CHAT, "No broadcast: " + ctx.chat.id);
     }
+});
+
+bot.catch(async (err) => {
+    const ctx = err.ctx;
+    await sendLog(`Error while handling update ${ctx.update.update_id}:`);
+    if (err.error instanceof Error) await sendLog(err.error.message);
 });
 
 export const handleUpdate = webhookCallback(bot, "hono");
