@@ -462,4 +462,8 @@ bot.callbackQuery(/prayertime/, async (ctx) => {
 	}
 });
 
+bot.command("broadcast", async (ctx) => {
+	await ctx.reply("test");
+});
+
 export const handleUpdate = webhookCallback(bot, 'hono');
