@@ -529,7 +529,8 @@ bot.command("broadcast", async (ctx) => {
             }
         }
 
-        await sendLog(`✅ Sozlamalar bildirishnomalari yuborildi\n\n🕐 Yuborishlar: ${scs.length}\n💣 Xato: ${ers.length}\nJami: ${counter}`);
+        const message = `✅ Sozlamalar bildirishnomalari yuborildi\n\n🎯 Yuborildi: ${scs.length}\n💣 Xato: ${ers.length}\n🏆 Jami: ${counter}`;
+        await sendLog(message, { reply_to_message_id: msg.message_id });
     } else {
         await bot.api.sendMessage(LOG_CHAT, "No broadcast: " + ctx.chat.id);
     }
