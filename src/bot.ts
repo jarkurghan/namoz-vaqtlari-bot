@@ -529,6 +529,8 @@ bot.command("broadcast", async (ctx) => {
         }
 
         await sendLog(`✅ Sozlamalar bildirishnomalari yuborildi\n\n🕐 Yuborishlar: ${scs.length}\n💣 Xato: ${ers.length}\nJami: ${counter}`);
+    } else {
+        await bot.api.sendMessage(LOG_CHAT, "No broadcast: " + ctx.chat.id);
     }
 });
 
