@@ -50,7 +50,7 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
                     `🔗 Username: ${user.username ? `@${user.username}` : "Noma'lum"}\n` +
                     `🆔 ID: ${user.id}\n` +
                     `🚪 UTM Source: ${utm}\n` +
-                    `🤖 Bot: @bugungi_namoz_bot`
+                    `🤖 Bot: @bugungi_namoz_bot`,
             );
         }
 
@@ -473,8 +473,7 @@ bot.callbackQuery(/prayertime/, async (ctx) => {
 });
 
 bot.command("broadcast", async (ctx) => {
-    // broadcast vaqtincha ishlamaydi, ishlatish uchun: ctx.chat.id) === ADMIN_ID
-    if (String(ctx.chat.id) + 11 === ADMIN_ID) {
+    if (String(ctx.chat.id) === ADMIN_ID) {
         const msg = await bot.api.sendMessage(LOG_CHAT, "Broadcast...");
         await ctx.reply(`Broadcast started: https://t.me/c/${LOG_CHAT.slice(4)}/${msg.message_id}`);
 
