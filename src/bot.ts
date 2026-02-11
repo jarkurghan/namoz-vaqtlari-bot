@@ -49,7 +49,7 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
                     `👤 Ism: ${user.first_name || "Noma'lum"} ${user.last_name || ""}\n` +
                     `🔗 Username: ${user.username ? `@${user.username}` : "Noma'lum"}\n` +
                     `🆔 ID: ${user.id}\n` +
-                    `🚪 UTM Source: ${utm}\n` +
+                    `🚪 Source: ${utm}\n` +
                     `🤖 Bot: @bugungi_namoz_bot`,
             );
         }
@@ -527,10 +527,10 @@ bot.command("broadcast", async (ctx) => {
                     ers.push(data[i].tg_id);
 
                     if (error instanceof GrammyError && error.description.includes("bot was blocked by the user")) {
-                        await sendLog(`User ${data[i].tg_id} botni bloklagan.`, { reply_to_message_id: msg.message_id });
+                        await sendLog(`Foydalanuvchi ${data[i].tg_id} botni bloklagan.`, { reply_to_message_id: msg.message_id });
                         await deactivateService(data[i].tg_id);
                     } else if (error instanceof GrammyError && error.description.includes("user is deactivated")) {
-                        await sendLog(`User ${data[i].tg_id} deleted account qilgan.`, { reply_to_message_id: msg.message_id });
+                        await sendLog(`Foydalanuvchi ${data[i].tg_id} deleted account qilgan.`, { reply_to_message_id: msg.message_id });
                         await deactivateService(data[i].tg_id);
                     } else if (error instanceof Error) {
                         await sendLog(`Xatolik yuz berdi (${data[i].tg_id}): \n${error.message}`, { reply_to_message_id: msg.message_id });

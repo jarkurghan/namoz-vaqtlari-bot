@@ -76,5 +76,5 @@ export const cronJob = async (index: number): Promise<void> => {
 		}
 	}
 
-	await sendLog(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${users.length - counter}`);
+	// await sendLog(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${users.length - counter}`);
 };
