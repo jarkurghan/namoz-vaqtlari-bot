@@ -118,7 +118,7 @@ export async function getData(part: number) {
 
     if (cities.length) await handler(cities, month);
 
-    // const cits = cities.map((e) => regions.find((cit) => cit.id == e)?.name_2).join(", ");
-    // await sendLog(`✅ Namoz vaqtlari bazaga yozildi\n\n🔂 Qism: ${part}\n🏙 Shaharlar: ${cits || "Tugagan"}`);
+    const cits = cities.map((e) => regions.find((cit) => cit.id == e)?.name_2).join(", ");
+    await sendLog(`✅ Namoz vaqtlari bazaga yozildi\n\n🔂 Qism: ${part}\n🏙 Shaharlar: ${cits || "Tugagan"}`);
     return;
 }
