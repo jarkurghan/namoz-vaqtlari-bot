@@ -6,7 +6,7 @@ import { UserTimeData } from './types';
 
 export const makeMessage = (language: number, userTime: UserTimeData): string => {
 	const isLatn = language == 2;
-	return (
+	let msg = (
 		`${isLatn ? userTime.date_text_uz : userTime.date_text_cyrl}\n\n` +
 		`${isLatn ? 'Tong' : 'Тонг'}: <b>${userTime.tong}</b>\n` +
 		`${isLatn ? 'Quyosh' : 'Қуёш'}: <b>${userTime.quyosh}</b>\n` +
@@ -15,6 +15,23 @@ export const makeMessage = (language: number, userTime: UserTimeData): string =>
 		`${isLatn ? 'Shom' : 'Шом'}: <b>${userTime.shom}</b>\n` +
 		`${isLatn ? 'Xufton' : 'Хуфтон'}: <b>${userTime.xufton}</b>\n`
 	);
+	
+	if (userTime.date_text_uz.includes("Ramazon")) {
+		if(isLatn) {
+			msg += `<i>\n\nSaharlik duosi:\n` +
+			`«Navaytu an asuma savma shahri Ramazona minal fajri ilal mag‘ribi, xolisan lillahi ta'ala. Allohu akbar»` +
+			`\n\nOg‘iz ochish duosi:\n` +
+			`«Allohumma laka sumtu va bika amantu va 'alayka tavakkaltu va 'ala rizqika aftortu. ` +
+			`Fag‘fir li ya G‘offaru ma qoddamtu va ma axxortu».</i>`
+		} else {
+			msg += `<i>\n\nСаҳарлик дуоси:\n` +
+			`«Навайту ан асума совма шаҳри рамазона минал фажри илал мағриби, холисан лиллаҳи таъала Аллоҳу акбар».` +
+			`\n\nОғиз очиш дуоси:\n` +
+			`«Аллоҳумма лака сумту ва бика аманту ва ъалайка таваккалту ва ъалаа ризқика афторту. ` +
+			`Фағфирли Я Ғоффару ма қоддамту ва ма аххорту».</i>`
+		}
+	}
+	return msg
 };
 
 export async function deactivateService(tg_id: number | string): Promise<void> {
