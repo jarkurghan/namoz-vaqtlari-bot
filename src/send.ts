@@ -13,7 +13,7 @@ export const makeMessage = (language: number, userTime: UserTimeData): string =>
 		`${isLatn ? 'Pеshin' : 'Пешин'}: <b>${userTime.peshin}</b>\n` +
 		`${isLatn ? 'Asr' : 'Аср'}: <b>${userTime.asr}</b>\n` +
 		`${isLatn ? 'Shom' : 'Шом'}: <b>${userTime.shom}</b>\n` +
-		`${isLatn ? 'Xufton' : 'Хуфтон'}: <b>${userTime.xufton}</b>\n`
+		`${isLatn ? 'Xufton' : 'Хуфтон'}: <b>${userTime.xufton}</b>`
 	);
 	
 	if (userTime.date_text_uz.includes("Ramazon")) {
