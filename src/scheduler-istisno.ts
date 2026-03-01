@@ -1,14 +1,16 @@
 import { cronJob } from "./send";
 
 const sendPrayerTimes = async () => {
-    await cronJob(6);
-    console.log(6);
-    await cronJob(7);
-    console.log(7);
-    await cronJob(8);
-    console.log(8);
-    await cronJob(9);
-    console.log(9);
+    await cronJob(10);
+    console.log(10);
+    await cronJob(11);
+    console.log(11);
+    await cronJob(12);
+    console.log(12);
+    await cronJob(13);
+    console.log(13);
+    await cronJob(14);
+    console.log(14);
 };
 
 sendPrayerTimes();
