@@ -32,7 +32,7 @@ bot.use(async (ctx, next) => {
 });
 
 bot.use(async (ctx) => {
-    await ctx.reply(MAINTENANCE_MESSAGE);
+    await ctx.reply(MAINTENANCE_MESSAGE).catch((err) => console.log(err.message));
 });
 
 async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
