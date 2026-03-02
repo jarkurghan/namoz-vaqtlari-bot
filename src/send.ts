@@ -6,6 +6,10 @@ import { UserTimeData } from "./types";
 
 export const makeMessage = (language: number, userTime: UserTimeData): string => {
 	const isLatn = language == 2;
+	return isLatn 
+		? "⏳ islom.uz saytidagi texnik o'zgarishlar sabab bot bir necha kun ishlamaydi."
+		: "⏳ islom.uz сайтидаги техник ўзгаришлар сабаб бот бир неча кун ишламайди.";
+
 	const isRamadan = userTime.date_text_uz.includes("Ramazon");
 
 	const dateText = `${isLatn ? userTime.date_text_uz : userTime.date_text_cyrl}\n\n`;
