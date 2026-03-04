@@ -23,15 +23,20 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
     let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
     try {
         // brauzer ochish
+        console.log("Brauzer ochish...");
         browser = await chromium.launch({ headless: true });
+        console.log("Brauzer ochildi...");
         const page = await browser.newPage();
+        console.log("Sahifa ochildi...");
 
         // islom.uz saytiga kirish
         await page.goto(TARGET_URL);
+        console.log("Islom.uz saytiga kirish...");
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
         // sanani olish
         const langBtn = page.locator(".header-top .c-dropdown button.media-info").last();
+        console.log("Sanani olish...");
 
         await langBtn.click();
         await new Promise((resolve) => setTimeout(resolve, 400));
@@ -46,9 +51,11 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
         const dateTextCyrl = await page.locator(".header-top__date").first().textContent().then(trim);
 
         await page.click('a[href="/taqvim"]');
+        console.log("Taqvim sahifasiga o'tish...");
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
         // namoz vaqtlari olish
+        console.log("Namoz vaqtlari olish...");
         const timestamp = Date.now();
         const cities = regions.filter((c) => cityIds.includes(c.id));
 
@@ -89,6 +96,7 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
                     };
 
                     // bazaga yozish
+                    console.log("Bazaga yozish...");
                     const { error } = await supabase.from("prayer_times").upsert(record, { onConflict: "city" });
                     if (error) {
                         await sendLog(`❗️ ${cities[i].name_2} shahar uchun namoz vaqtlarini bazaga yozib bo'lmadi\n\n${error.message}`);
@@ -114,9 +122,12 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
         }
     } finally {
         // brauzer yopish
+        console.log("Brauzer yopish...");
         if (browser) {
             await browser.close();
         }
+
+        console.log("Bajarildi!");
     }
 }
 
