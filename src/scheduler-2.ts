@@ -25,9 +25,7 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
         // brauzer ochish
         console.log("Brauzer ochish...");
         browser = await chromium.launch({ headless: true });
-        console.log("Brauzer ochildi...");
         const page = await browser.newPage();
-        console.log("Sahifa ochildi...");
 
         // islom.uz saytiga kirish
         await page.goto(TARGET_URL);
@@ -36,7 +34,6 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
 
         // sanani olish
         const langBtn = page.locator(".header-top .c-dropdown button.media-info").last();
-        console.log("Sanani olish...");
 
         await langBtn.click();
         await new Promise((resolve) => setTimeout(resolve, 400));
@@ -51,7 +48,6 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
         const dateTextCyrl = await page.locator(".header-top__date").first().textContent().then(trim);
 
         await page.click('a[href="/taqvim"]');
-        console.log("Taqvim sahifasiga o'tish...");
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
         // namoz vaqtlari olish
@@ -65,9 +61,8 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
         for (let i = 0; i < cities.length; i++) {
             try {
                 const city = cities[i];
-                console.log(68, city.name_2);
                 if (city) {
-                    console.log(`[${i + 1}/${cities.length}] ${city.name_1} (${city.viloyat_1})...`);
+                    console.log(`[${i + 1}/${cities.length}] ${city.name_2} (${city.viloyat_2})...`);
 
                     await page.click(".taqvim-city-btn");
                     await new Promise((resolve) => setTimeout(resolve, 400));
@@ -100,7 +95,6 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
                     };
 
                     // bazaga yozish
-                    console.log("Bazaga yozish...");
                     const { error } = await supabase.from("prayer_times").upsert(record, { onConflict: "city" });
                     if (error) {
                         await sendLog(`❗️ ${cities[i].name_2} shahar uchun namoz vaqtlarini bazaga yozib bo'lmadi\n\n${error.message}`);

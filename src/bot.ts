@@ -22,19 +22,6 @@ if (!BOT_TOKEN) throw new Error("BOT_TOKEN topilmadi!");
 
 export const bot = new Bot(BOT_TOKEN);
 
-export const MAINTENANCE_MESSAGE =
-    "⏳ islom.uz saytidagi texnik o'zgarishlar sabab bot bir necha kun ishlamayi." +
-    "\n\nislom.uz сайтидаги техник ўзгаришлар сабаб бот бир неча кун ишламайди.";
-
-bot.use(async (ctx, next) => {
-    if (ctx.chat?.type !== "private") return;
-    await next();
-});
-
-bot.use(async (ctx) => {
-    await ctx.reply(MAINTENANCE_MESSAGE).catch((err) => console.log(err.message));
-});
-
 async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
     const user = ctx.from;
     if (!user) return [];
