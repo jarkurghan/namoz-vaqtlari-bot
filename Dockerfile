@@ -27,6 +27,9 @@ COPY --from=install /temp/prod/ms-playwright /usr/src/app/ms-playwright
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/usr/src/app/ms-playwright
 
+# Chromium uchun tizim kutubxonalari (libglib va boshqalar)
+RUN bunx playwright install-deps chromium
+
 RUN chown -R bun:bun /usr/src/app
 
 # run the app
