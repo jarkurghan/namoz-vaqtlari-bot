@@ -143,6 +143,7 @@ async function main() {
     console.log(143, JSON.stringify(data, null, 2));
     const set = [...new Set(data.map((e) => e.city))];
     console.log(145, set.length);
+    console.log(set);
     await getPrayerTimesFromIslomUz(set);
     return;
 }
