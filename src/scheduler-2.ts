@@ -57,11 +57,15 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
         // namoz vaqtlari olish
         console.log("Namoz vaqtlari olish...");
         const timestamp = Date.now();
+
+        console.log(61, cityIds.length);
         const cities = regions.filter((c) => cityIds.includes(c.id));
+        console.log(63, cities.length);
 
         for (let i = 0; i < cities.length; i++) {
             try {
                 const city = cities[i];
+                console.log(68, city.name_2);
                 if (city) {
                     console.log(`[${i + 1}/${cities.length}] ${city.name_1} (${city.viloyat_1})...`);
 
@@ -136,7 +140,9 @@ async function main() {
     if (error) return console.error(error);
     if (!data?.length) return;
 
+    console.log(143, data.length);
     const set = [...new Set(data.map((e) => e.city))];
+    console.log(145, set.length);
     await getPrayerTimesFromIslomUz(set);
     return;
 }
