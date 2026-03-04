@@ -19,6 +19,7 @@ Bot foydalanuvchilarga har kuni ularning tanlagan hududi va vaqti bo'yicha kunli
 -   **Telegram Bot API**
 -   **grammY** — Telegram bot uchun.
 -   **Supabase** — Ma'lumotlar bazasi.
+-   **Playwright** — Namoz vaqtlarini saytidan olish uchun.
 
 ## 🚀 Loyihani Ishga Tushirish
 

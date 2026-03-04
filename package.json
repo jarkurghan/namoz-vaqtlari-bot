@@ -12,9 +12,8 @@
     "dependencies": {
         "@grammyjs/types": "^3.22.2",
         "@supabase/supabase-js": "^2.84.0",
-        "axios": "^1.13.2",
-        "cheerio": "^1.1.2",
         "grammy": "^1.38.4",
-        "hono": "^4.11.3"
+        "hono": "^4.11.3",
+        "playwright": "^1.58.2"
     }
 }
