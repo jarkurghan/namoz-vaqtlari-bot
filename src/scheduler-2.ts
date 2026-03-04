@@ -10,13 +10,31 @@ const TARGET_URL = "https://islom.uz";
 function parseTime(str: string): string {
     const m = str.match(/(\d{1,2}):(\d{2})/);
     if (!m) return "";
-    const h = m[1]!.padStart(2, "0");
-    const min = m[2]!.padStart(2, "0");
-    return `${h}:${min}`;
+    let h = parseInt(m[1]!, 10);
+    const min = parseInt(m[2]!, 10);
+    h = (h + 5) % 24;
+    return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }
 
 function trim(str?: string | null): string {
     return str?.trim() ?? "";
+}
+
+function parseDate(dateTextUz: string, dateTextCyrl: string): { date_text_uz: string; date_text_cyrl: string } {
+    const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "");
+    const low = (s: string) => (s ? s.toLowerCase() : "");
+
+    const reUz = /(\d{4})\s+yil\s+(\d{1,2})\s+(\S+)\s+\|\s+(\d{4})\s+yil\s+(\d{1,2})\s+(\S+),\s*(\S+)/i;
+    const reCyrl = /(\d{4})\s+йил\s+(\d{1,2})\s+(\S+)\s+\|\s+(\d{4})\s+йил\s+(\d{1,2})\s+(\S+),\s*(\S+)/i;
+
+    const mUz = dateTextUz.match(reUz);
+    const mCyrl = dateTextCyrl.match(reCyrl);
+    if (!mUz || !mCyrl) return { date_text_uz: dateTextUz, date_text_cyrl: dateTextCyrl };
+
+    const date_text_uz = [cap(mUz[7]!), `${mUz[5]!}-${low(mUz[6]!)} ${mUz[4]!}`, `${cap(mUz[3]!)} ${mUz[2]!}, ${mUz[1]!}`].join("\n");
+    const date_text_cyrl = [cap(mCyrl[7]!), `${mCyrl[5]!}-${low(mCyrl[6]!)} ${mCyrl[4]!}`, `${cap(mCyrl[3]!)} ${mCyrl[2]!}, ${mCyrl[1]!}`].join("\n");
+
+    return { date_text_uz, date_text_cyrl };
 }
 
 async function getPrayerTimesFromIslomUz(cityIds: string[]) {
@@ -81,10 +99,11 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
                         });
                     });
 
+                    const { date_text_uz, date_text_cyrl } = parseDate(dateTextUz, dateTextCyrl);
                     const record = {
                         city: city.id,
-                        date_text_cyrl: dateTextCyrl,
-                        date_text_uz: dateTextUz,
+                        date_text_cyrl,
+                        date_text_uz,
                         tong: parseTime(times[0] ?? ""),
                         quyosh: parseTime(times[1] ?? ""),
                         peshin: parseTime(times[2] ?? ""),
