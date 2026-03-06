@@ -7,13 +7,21 @@ import regions from "./cities.json";
 
 const TARGET_URL = "https://islom.uz";
 
+// function parseTime(str: string): string {
+//     const m = str.match(/(\d{1,2}):(\d{2})/);
+//     if (!m) return "";
+//     let h = parseInt(m[1]!, 10);
+//     const min = parseInt(m[2]!, 10);
+//     h = (h + 5) % 24;
+//     return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+// }
+
 function parseTime(str: string): string {
     const m = str.match(/(\d{1,2}):(\d{2})/);
     if (!m) return "";
-    let h = parseInt(m[1]!, 10);
-    const min = parseInt(m[2]!, 10);
-    h = (h + 5) % 24;
-    return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+    const h = m[1]!.padStart(2, "0");
+    const min = m[2]!.padStart(2, "0");
+    return `${h}:${min}`;
 }
 
 function trim(str?: string | null): string {
