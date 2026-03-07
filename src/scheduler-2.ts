@@ -178,13 +178,14 @@ async function main() {
     }
 }
 
-main()
-    .then(async () => {
-        await sql.end();
-        // process.exit(0);
-    })
-    .catch(async (err) => {
-        console.error(err);
-        await sql.end();
-        // process.exit(1);
-    });
+const success = async () => {
+    await sql.end();
+    // process.exit(0);
+};
+
+const end = async (err: unknown) => {
+    console.error(err);
+    process.exit(1);
+};
+
+main().then(success).catch(end);
