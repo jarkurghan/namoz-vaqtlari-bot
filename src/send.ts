@@ -1,8 +1,13 @@
 import { bot } from "./bot";
 import { sendLog } from "./log";
-import { supabase } from "./supabase";
 import { PrayerUser } from "./types";
 import { UserTimeData } from "./types";
+import { db } from "./db";
+import { ptu, pt } from "./db/schema";
+import { and, eq } from "drizzle-orm";
+
+type PrayerTimeUserSelect = typeof ptu.$inferSelect;
+type PrayerTimesSelect = typeof pt.$inferSelect;
 
 export const makeMessage = (language: number, userTime: UserTimeData): string => {
 	const isLatn = language == 2;
@@ -36,12 +41,40 @@ export const makeMessage = (language: number, userTime: UserTimeData): string =>
 	return dateText + fajrText + sunriseText + dhuhrText + asrText + maghribText + ishaText + duaText;
 };
 
+async function mapDbUsersToPrayerUsers(rows: PrayerTimeUserSelect[]): Promise<PrayerUser[]> {
+	return rows.map((row) => ({
+		tg_id: row.tgId ?? "",
+		language: row.language ?? 0,
+		city: String(row.city ?? ""),
+		is_active: row.isActive ?? false,
+		time: row.time ?? 0,
+	}));
+}
+
+function mapDbPrayerTimesToUserTimeData(rows: PrayerTimesSelect[]): UserTimeData[] {
+	return rows.map((row) => ({
+		date_text_uz: row.dateTextUz,
+		date_text_cyrl: row.dateTextCyrl,
+		tong: row.tong,
+		quyosh: row.quyosh,
+		peshin: row.peshin,
+		asr: row.asr,
+		shom: row.shom,
+		xufton: row.xufton,
+		city: String(row.city),
+	}));
+}
+
 export async function deactivateService(tg_id: number | string): Promise<void> {
 	try {
-		const { error } = await supabase.from("prayer_time_users").upsert({ tg_id, is_active: false }, { onConflict: "tg_id" }).select("*");
+		const updated = await db
+			.update(ptu)
+			.set({ isActive: false })
+			.where(eq(ptu.tgId, String(tg_id)))
+			.returning();
 
-		if (error) {
-			await sendLog(`❗️ Xizmatni o'chirib bo'lmadi:\n\n👤 User ID: ${tg_id}\n💣 Xato: ${error.message}`);
+		if (!updated.length) {
+			await sendLog(`❗️ Xizmatni o'chirib bo'lmadi (foydalanuvchi topilmadi):\n\n👤 User ID: ${tg_id}`);
 		} else {
 			await sendLog(`⚰️ Foydalanuvchi ${tg_id} uchun xizmat o'chirildi`);
 		}
@@ -56,22 +89,32 @@ export async function deactivateService(tg_id: number | string): Promise<void> {
 }
 
 export const cronJob = async (index: number): Promise<void> => {
-	const { data: users, error } = await supabase.from("prayer_time_users").select("*").eq("time", index).eq("is_active", true);
+	let userRows: PrayerTimeUserSelect[] = [];
+	let timeRows: PrayerTimesSelect[] = [];
 
-	const { data: times, error: error1 } = await supabase.from("prayer_times").select("*");
-
-	if (error) {
-		await sendLog(`❗️ prayer_time_users table'ni o'qib bo'lmadi: ${error.message}`);
+	try {
+		userRows = await db
+			.select()
+			.from(ptu)
+			.where(and(eq(ptu.time, index), eq(ptu.isActive, true)));
+	} catch (error) {
+		const message =
+			"❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
+		await sendLog(message);
 		return;
 	}
 
-	if (error1) {
-		await sendLog(`❗️ prayer_times table'ni o'qib bo'lmadi: ${error1.message}`);
+	try {
+		timeRows = await db.select().from(pt);
+	} catch (error) {
+		const message =
+			"❗️ prayer_times jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
+		await sendLog(message);
 		return;
 	}
 
-	const typedUsers = users as PrayerUser[];
-	const typedTimes = times as UserTimeData[];
+	const typedUsers = await mapDbUsersToPrayerUsers(userRows);
+	const typedTimes = mapDbPrayerTimesToUserTimeData(timeRows);
 
 	let counter = 0;
 	for (const user of typedUsers) {

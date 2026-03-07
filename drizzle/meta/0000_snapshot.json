@@ -1,0 +1,213 @@
+{
+  "id": "37c99900-b603-4e98-8251-2b957b869547",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.prayer_time_users": {
+      "name": "prayer_time_users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tg_id": {
+          "name": "tg_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "language": {
+          "name": "language",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "name": "time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {
+        "users_namoz_vaqtlari_bot_tg_id_unique": {
+          "name": "users_namoz_vaqtlari_bot_tg_id_unique",
+          "columns": [
+            {
+              "expression": "tg_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.prayer_times": {
+      "name": "prayer_times",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "city": {
+          "name": "city",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_text_cyrl": {
+          "name": "date_text_cyrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_text_uz": {
+          "name": "date_text_uz",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tong": {
+          "name": "tong",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quyosh": {
+          "name": "quyosh",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "peshin": {
+          "name": "peshin",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "asr": {
+          "name": "asr",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shom": {
+          "name": "shom",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "xufton": {
+          "name": "xufton",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_date": {
+          "name": "updated_date",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "prayer_times_city_key": {
+          "name": "prayer_times_city_key",
+          "columns": [
+            {
+              "expression": "city",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_prayer_times_region_date": {
+          "name": "idx_prayer_times_region_date",
+          "columns": [
+            {
+              "expression": "city",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

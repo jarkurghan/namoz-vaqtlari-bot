@@ -1,20 +1,14 @@
 /// <reference lib="dom" />
 
-import { sendLog } from "./log";
-import { supabase } from "./supabase";
-import { chromium } from "playwright";
 import regions from "./cities.json";
+import { chromium } from "playwright";
+import { sendLog } from "./log";
+import { ptu } from "./db/schema";
+import { pt } from "./db/schema";
+import { eq } from "drizzle-orm";
+import { db } from "./db";
 
 const TARGET_URL = "https://islom.uz";
-
-// function parseTime(str: string): string {
-//     const m = str.match(/(\d{1,2}):(\d{2})/);
-//     if (!m) return "";
-//     let h = parseInt(m[1]!, 10);
-//     const min = parseInt(m[2]!, 10);
-//     h = (h + 5) % 24;
-//     return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
-// }
 
 function parseTime(str: string): string {
     const m = str.match(/(\d{1,2}):(\d{2})/);
@@ -109,23 +103,37 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
 
                     const { date_text_uz, date_text_cyrl } = parseDate(dateTextUz, dateTextCyrl);
                     const record = {
-                        city: city.id,
-                        date_text_cyrl,
-                        date_text_uz,
+                        id: Number(city.id),
+                        city: Number(city.id),
+                        dateTextCyrl: date_text_cyrl,
+                        dateTextUz: date_text_uz,
                         tong: parseTime(times[0] ?? ""),
                         quyosh: parseTime(times[1] ?? ""),
                         peshin: parseTime(times[2] ?? ""),
                         asr: parseTime(times[3] ?? ""),
                         shom: parseTime(times[4] ?? ""),
                         xufton: parseTime(times[5] ?? ""),
-                        updated_date: timestamp,
+                        updatedDate: timestamp,
                     };
 
-                    // bazaga yozish
-                    const { error } = await supabase.from("prayer_times").upsert(record, { onConflict: "city" });
-                    if (error) {
-                        await sendLog(`❗️ ${cities[i].name_2} shahar uchun namoz vaqtlarini bazaga yozib bo'lmadi\n\n${error.message}`);
-                    }
+                    // bazaga yozish (Drizzle)
+                    await db
+                        .insert(pt)
+                        .values(record)
+                        .onConflictDoUpdate({
+                            target: pt.city,
+                            set: {
+                                dateTextCyrl: record.dateTextCyrl,
+                                dateTextUz: record.dateTextUz,
+                                tong: record.tong,
+                                quyosh: record.quyosh,
+                                peshin: record.peshin,
+                                asr: record.asr,
+                                shom: record.shom,
+                                xufton: record.xufton,
+                                updatedDate: record.updatedDate,
+                            },
+                        });
                 }
             } catch (error) {
                 const errorMsg = `❗️ ${cities[i]?.name_2} shahar uchun namoz vaqtlarini olib bo'lmadi\n\n`;
@@ -157,13 +165,17 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
 }
 
 async function main() {
-    const { data, error } = await supabase.from("prayer_time_users").select("city").eq("is_active", true);
-    if (error) return console.error(error);
-    if (!data?.length) return;
+    try {
+        const rows = await db.select({ city: ptu.city }).from(ptu).where(eq(ptu.isActive, true));
 
-    const set = [...new Set(data.filter((e) => e.city).map((e) => String(e.city)))];
-    await getPrayerTimesFromIslomUz(set);
-    return;
+        if (!rows.length) return;
+
+        const set = [...new Set(rows.filter((e) => e.city != null).map((e) => String(e.city)))];
+        await getPrayerTimesFromIslomUz(set);
+        return;
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 main();

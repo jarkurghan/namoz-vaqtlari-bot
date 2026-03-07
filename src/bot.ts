@@ -2,13 +2,13 @@ import { Bot } from "grammy";
 import { CTX } from "./types";
 import { User } from "./types";
 import { SaveUserData } from "./types";
+import { UserTimeData } from "./types";
 import { deactivateService } from "./send";
 import { makeMessage } from "./send";
 import { ADMIN_ID } from "./constants";
 import { LOG_CHAT } from "./constants";
 import { BOT_TOKEN } from "./constants";
 import { ADMIN_CHAT } from "./constants";
-import { supabase } from "./supabase";
 import { GrammyError } from "grammy";
 import { InlineKeyboard } from "grammy";
 import { webhookCallback } from "grammy";
@@ -17,6 +17,41 @@ import { ParseMode } from "@grammyjs/types/message";
 import { dontDelete } from "./log";
 import { sendLog } from "./log";
 import regions from "./cities.json";
+import { db } from "./db";
+import { ptu, pt } from "./db/schema";
+import { eq } from "drizzle-orm";
+
+type PrayerTimeUserSelect = typeof ptu.$inferSelect;
+type PrayerTimeUserInsert = typeof ptu.$inferInsert;
+type PrayerTimesSelect = typeof pt.$inferSelect;
+
+function mapDbUserToUser(row: PrayerTimeUserSelect): User {
+    return {
+        id: row.id,
+        tg_id: row.tgId ?? "",
+        first_name: row.firstName ?? "",
+        last_name: row.lastName ?? null,
+        username: row.username ?? null,
+        city: row.city ?? undefined,
+        time: row.time ?? undefined,
+        language: row.language ?? undefined,
+        is_active: row.isActive ?? undefined,
+    };
+}
+
+function mapDbPrayerTimeToUserTimeData(row: PrayerTimesSelect): UserTimeData {
+    return {
+        date_text_uz: row.dateTextUz,
+        date_text_cyrl: row.dateTextCyrl,
+        tong: row.tong,
+        quyosh: row.quyosh,
+        peshin: row.peshin,
+        asr: row.asr,
+        shom: row.shom,
+        xufton: row.xufton,
+        city: String(row.city),
+    };
+}
 
 if (!BOT_TOKEN) throw new Error("BOT_TOKEN topilmadi!");
 
@@ -39,7 +74,12 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
     if (data && typeof data.is_active === "boolean") userData.is_active = data.is_active;
 
     try {
-        const { data: existingUser } = await supabase.from("prayer_time_users").select("tg_id").eq("tg_id", userData.tg_id).maybeSingle();
+        const existingRows = await db
+            .select({ tgId: ptu.tgId })
+            .from(ptu)
+            .where(eq(ptu.tgId, String(userData.tg_id)))
+            .limit(1);
+        const existingUser = existingRows[0];
 
         if (!existingUser) {
             const utm = data?.utm || "-";
@@ -54,11 +94,35 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
             );
         }
 
-        const { data: upsertedData, error } = await supabase.from("prayer_time_users").upsert(userData, { onConflict: "tg_id" }).select("*");
+        const values: PrayerTimeUserInsert = {
+            tgId: String(userData.tg_id),
+            firstName: userData.first_name,
+            lastName: userData.last_name,
+            username: userData.username,
+            city: userData.city !== undefined ? Number(userData.city) : null,
+            language: userData.language !== undefined ? Number(userData.language) : null,
+            time: userData.time !== undefined ? Number(userData.time) : null,
+            isActive: typeof userData.is_active === "boolean" ? userData.is_active : true,
+        };
 
-        if (error) console.error("Supabasega saqlashda xato:", error);
+        const upsertedData = await db
+            .insert(ptu)
+            .values(values)
+            .onConflictDoUpdate({
+                target: ptu.tgId,
+                set: {
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    username: values.username,
+                    city: values.city,
+                    language: values.language,
+                    time: values.time,
+                    isActive: values.isActive,
+                },
+            })
+            .returning();
 
-        return (upsertedData as User[]) || [];
+        return upsertedData.map(mapDbUserToUser);
     } catch (error) {
         if (error instanceof Error) {
             await sendLog(`User create qilib bo'lmadi (${user.id}): \n${error.message}`);
@@ -72,15 +136,23 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
 export const isActiveCity = async (city: number): Promise<boolean> => {
     const currentTimestamp = new Date().getTime();
 
-    const { data, error } = await supabase.from("prayer_times").select("updated_date").eq("city", city);
-    if (error) {
+    try {
+        const rows = await db
+            .select({ updatedDate: pt.updatedDate })
+            .from(pt)
+            .where(eq(pt.city, city))
+            .limit(1);
+        const row = rows[0];
+
+        if (!row) return false;
+
+        const cityTimestamp = new Date(row.updatedDate).getTime();
+
+        return 86400000 > currentTimestamp - cityTimestamp;
+    } catch (error) {
         console.error(error);
         return false;
     }
-
-    const cityTimestamp = new Date(data[0].updated_date).getTime();
-
-    return 86400000 > currentTimestamp - cityTimestamp;
 };
 
 function getTimeKeyboard(lang: number, is_back?: boolean) {
@@ -463,8 +535,20 @@ bot.callbackQuery(/prayertime/, async (ctx) => {
             await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            const { data: userTime } = await supabase.from("prayer_times").select("*").eq("city", user.city);
-            const message = makeMessage(lang, userTime?.[0]);
+            const rows = await db
+                .select()
+                .from(pt)
+                .where(eq(pt.city, Number(user.city)))
+                .limit(1);
+            const prayerTimeRow = rows[0];
+
+            if (!prayerTimeRow) {
+                await sendLog(`❗️ prayer_times jadvalidan ma'lumot topilmadi\n\n${JSON.stringify(user, null, 2)}`);
+                await ctx.answerCallbackQuery({ text: lang === 2 ? "Ma'lumot topilmadi" : "Маълумот топилмади", show_alert: true });
+                return;
+            }
+
+            const message = makeMessage(lang, mapDbPrayerTimeToUserTimeData(prayerTimeRow));
             await ctx.deleteMessage().catch(async (err) => await dontDelete(ctx, err));
             await ctx.reply(message, { parse_mode: "HTML" });
             await ctx.reply(await MESSAGES.DASHBOARD(user), await makeMarks({ key: "dashboard", lang, city: Number(user.city) }));
@@ -477,15 +561,24 @@ bot.command("broadcast", async (ctx) => {
         const msg = await bot.api.sendMessage(LOG_CHAT, "Broadcast...");
         await ctx.reply(`Broadcast started: https://t.me/c/${LOG_CHAT.slice(4)}/${msg.message_id}`);
 
-        const { data, error } = await supabase.from("prayer_time_users").select("*").eq("is_active", true);
-        if (error) {
-            await sendLog(`❗️ prayer_time_users table'ni o'qib bo'lmadi: ${error.message}`, { reply_to_message_id: msg.message_id });
+        let users: PrayerTimeUserSelect[] = [];
+        try {
+            users = await db
+                .select()
+                .from(ptu)
+                .where(eq(ptu.isActive, true));
+        } catch (error) {
+            const message =
+                "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " +
+                (error instanceof Error ? error.message : String(error));
+            await sendLog(message, { reply_to_message_id: msg.message_id });
             return;
         }
 
         const scs = [];
         const ers = [];
         let counter = 0;
+        const data = users.map(mapDbUserToUser);
         for (let i = 0; i < data.length; i++) {
             if (!data[i].time || !data[i].city || !data[i].language) {
                 try {

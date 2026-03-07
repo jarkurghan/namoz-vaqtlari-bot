@@ -2,18 +2,24 @@
     "name": "namoz-vaqtlari-bot",
     "version": "1.0.0",
     "scripts": {
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "bun src/db/migrate.ts",
+        "db:studio": "drizzle-kit studio",
         "dev": "bun --watch src/index.ts",
         "start": "bun src/index.ts"
     },
     "devDependencies": {
+        "drizzle-kit": "^0.31.9",
         "typescript": "^5.5.2",
         "vitest": "~3.2.0"
     },
     "dependencies": {
         "@grammyjs/types": "^3.22.2",
         "@supabase/supabase-js": "^2.84.0",
+        "drizzle-orm": "^0.45.1",
         "grammy": "^1.38.4",
         "hono": "^4.11.3",
-        "playwright": "^1.58.2"
+        "playwright": "^1.58.2",
+        "postgres": "^3.4.8"
     }
 }
