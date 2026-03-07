@@ -52,29 +52,29 @@ async function migratePrayerTimeUsers() {
 
         const values = chunk.map((row) => ({
             id: row.id,
-            tgId: String(row.tg_id),
-            firstName: row.first_name,
-            lastName: row.last_name,
+            tg_id: String(row.tg_id),
+            first_name: row.first_name,
+            last_name: row.last_name,
             username: row.username,
             city: row.city,
             language: row.language,
             time: row.time,
-            isActive: row.is_active ?? true,
+            is_active: row.is_active ?? true,
         }));
 
         await db
             .insert(ptu)
             .values(values)
             .onConflictDoUpdate({
-                target: ptu.tgId,
+                target: ptu.tg_id,
                 set: {
-                    firstName: (values[0] as any).firstName,
-                    lastName: (values[0] as any).lastName,
+                    first_name: (values[0] as any).first_name,
+                    last_name: (values[0] as any).last_name,
                     username: (values[0] as any).username,
                     city: (values[0] as any).city,
                     language: (values[0] as any).language,
                     time: (values[0] as any).time,
-                    isActive: (values[0] as any).isActive,
+                    is_active: (values[0] as any).is_active,
                 },
             });
 
@@ -107,15 +107,15 @@ async function migratePrayerTimes() {
         const values = chunk.map((row) => ({
             id: row.id,
             city: row.city,
-            dateTextCyrl: row.date_text_cyrl,
-            dateTextUz: row.date_text_uz,
+            date_text_cyrl: row.date_text_cyrl,
+            date_text_uz: row.date_text_uz,
             tong: row.tong,
             quyosh: row.quyosh,
             peshin: row.peshin,
             asr: row.asr,
             shom: row.shom,
             xufton: row.xufton,
-            updatedDate: row.updated_date,
+            updated_date: row.updated_date,
         }));
 
         await db
@@ -124,15 +124,15 @@ async function migratePrayerTimes() {
             .onConflictDoUpdate({
                 target: pt.city,
                 set: {
-                    dateTextCyrl: (values[0] as any).dateTextCyrl,
-                    dateTextUz: (values[0] as any).dateTextUz,
+                    date_text_cyrl: (values[0] as any).date_text_cyrl,
+                    date_text_uz: (values[0] as any).date_text_uz,
                     tong: (values[0] as any).tong,
                     quyosh: (values[0] as any).quyosh,
                     peshin: (values[0] as any).peshin,
                     asr: (values[0] as any).asr,
                     shom: (values[0] as any).shom,
                     xufton: (values[0] as any).xufton,
-                    updatedDate: (values[0] as any).updatedDate,
+                    updated_date: (values[0] as any).updated_date,
                 },
             });
 

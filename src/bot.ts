@@ -11,7 +11,6 @@ import { BOT_TOKEN } from "./constants";
 import { ADMIN_CHAT } from "./constants";
 import { GrammyError } from "grammy";
 import { InlineKeyboard } from "grammy";
-import { webhookCallback } from "grammy";
 import { paramsTypeOfMakeMarks } from "./types";
 import { ParseMode } from "@grammyjs/types/message";
 import { dontDelete } from "./log";
@@ -28,21 +27,21 @@ type PrayerTimesSelect = typeof pt.$inferSelect;
 function mapDbUserToUser(row: PrayerTimeUserSelect): User {
     return {
         id: row.id,
-        tg_id: row.tgId ?? "",
-        first_name: row.firstName ?? "",
-        last_name: row.lastName ?? null,
+        tg_id: row.tg_id ?? "",
+        first_name: row.first_name ?? "",
+        last_name: row.last_name ?? null,
         username: row.username ?? null,
         city: row.city ?? undefined,
         time: row.time ?? undefined,
         language: row.language ?? undefined,
-        is_active: row.isActive ?? undefined,
+        is_active: row.is_active ?? undefined,
     };
 }
 
 function mapDbPrayerTimeToUserTimeData(row: PrayerTimesSelect): UserTimeData {
     return {
-        date_text_uz: row.dateTextUz,
-        date_text_cyrl: row.dateTextCyrl,
+        date_text_uz: row.date_text_uz,
+        date_text_cyrl: row.date_text_cyrl,
         tong: row.tong,
         quyosh: row.quyosh,
         peshin: row.peshin,
@@ -74,12 +73,11 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
     if (data && typeof data.is_active === "boolean") userData.is_active = data.is_active;
 
     try {
-        const existingRows = await db
-            .select({ tgId: ptu.tgId })
+        const [existingUser] = await db
+            .select()
             .from(ptu)
-            .where(eq(ptu.tgId, String(userData.tg_id)))
+            .where(eq(ptu.tg_id, String(userData.tg_id)))
             .limit(1);
-        const existingUser = existingRows[0];
 
         if (!existingUser) {
             const utm = data?.utm || "-";
@@ -94,32 +92,10 @@ async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
             );
         }
 
-        const values: PrayerTimeUserInsert = {
-            tgId: String(userData.tg_id),
-            firstName: userData.first_name,
-            lastName: userData.last_name,
-            username: userData.username,
-            city: userData.city !== undefined ? Number(userData.city) : null,
-            language: userData.language !== undefined ? Number(userData.language) : null,
-            time: userData.time !== undefined ? Number(userData.time) : null,
-            isActive: typeof userData.is_active === "boolean" ? userData.is_active : true,
-        };
-
         const upsertedData = await db
             .insert(ptu)
-            .values(values)
-            .onConflictDoUpdate({
-                target: ptu.tgId,
-                set: {
-                    firstName: values.firstName,
-                    lastName: values.lastName,
-                    username: values.username,
-                    city: values.city,
-                    language: values.language,
-                    time: values.time,
-                    isActive: values.isActive,
-                },
-            })
+            .values(userData as PrayerTimeUserInsert)
+            .onConflictDoUpdate({ target: ptu.tg_id, set: userData as PrayerTimeUserInsert })
             .returning();
 
         return upsertedData.map(mapDbUserToUser);
@@ -137,11 +113,7 @@ export const isActiveCity = async (city: number): Promise<boolean> => {
     const currentTimestamp = new Date().getTime();
 
     try {
-        const rows = await db
-            .select({ updatedDate: pt.updatedDate })
-            .from(pt)
-            .where(eq(pt.city, city))
-            .limit(1);
+        const rows = await db.select({ updatedDate: pt.updated_date }).from(pt).where(eq(pt.city, city)).limit(1);
         const row = rows[0];
 
         if (!row) return false;
@@ -563,14 +535,9 @@ bot.command("broadcast", async (ctx) => {
 
         let users: PrayerTimeUserSelect[] = [];
         try {
-            users = await db
-                .select()
-                .from(ptu)
-                .where(eq(ptu.isActive, true));
+            users = await db.select().from(ptu).where(eq(ptu.is_active, true));
         } catch (error) {
-            const message =
-                "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " +
-                (error instanceof Error ? error.message : String(error));
+            const message = "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
             await sendLog(message, { reply_to_message_id: msg.message_id });
             return;
         }
@@ -647,4 +614,7 @@ bot.catch(async (err) => {
     if (err.error instanceof Error) await sendLog(err.error.message);
 });
 
-export const handleUpdate = webhookCallback(bot, "hono");
+/** Hozircha long polling orqali ishlaydi */
+export function startBot() {
+    return bot.start();
+}

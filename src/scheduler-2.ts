@@ -105,15 +105,15 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
                     const record = {
                         id: Number(city.id),
                         city: Number(city.id),
-                        dateTextCyrl: date_text_cyrl,
-                        dateTextUz: date_text_uz,
+                        date_text_cyrl: date_text_cyrl,
+                        date_text_uz: date_text_uz,
                         tong: parseTime(times[0] ?? ""),
                         quyosh: parseTime(times[1] ?? ""),
                         peshin: parseTime(times[2] ?? ""),
                         asr: parseTime(times[3] ?? ""),
                         shom: parseTime(times[4] ?? ""),
                         xufton: parseTime(times[5] ?? ""),
-                        updatedDate: timestamp,
+                        updated_date: timestamp,
                     };
 
                     // bazaga yozish (Drizzle)
@@ -123,15 +123,15 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
                         .onConflictDoUpdate({
                             target: pt.city,
                             set: {
-                                dateTextCyrl: record.dateTextCyrl,
-                                dateTextUz: record.dateTextUz,
+                                date_text_cyrl: record.date_text_cyrl,
+                                date_text_uz: record.date_text_uz,
                                 tong: record.tong,
                                 quyosh: record.quyosh,
                                 peshin: record.peshin,
                                 asr: record.asr,
                                 shom: record.shom,
                                 xufton: record.xufton,
-                                updatedDate: record.updatedDate,
+                                updated_date: record.updated_date,
                             },
                         });
                 }
@@ -166,7 +166,7 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
 
 async function main() {
     try {
-        const rows = await db.select({ city: ptu.city }).from(ptu).where(eq(ptu.isActive, true));
+        const rows = await db.select({ city: ptu.city }).from(ptu).where(eq(ptu.is_active, true));
 
         if (!rows.length) return;
 
