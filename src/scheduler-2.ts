@@ -6,7 +6,7 @@ import { sendLog } from "./log";
 import { ptu } from "./db/schema";
 import { pt } from "./db/schema";
 import { eq } from "drizzle-orm";
-import { db } from "./db";
+import { db, sql } from "./db";
 
 const TARGET_URL = "https://islom.uz";
 
@@ -178,4 +178,13 @@ async function main() {
     }
 }
 
-main();
+main()
+    .then(async () => {
+        await sql.end();
+        // process.exit(0);
+    })
+    .catch(async (err) => {
+        console.error(err);
+        await sql.end();
+        // process.exit(1);
+    });
