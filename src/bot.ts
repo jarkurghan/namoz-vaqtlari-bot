@@ -1,7 +1,7 @@
 import regions from "./cities.json";
 import { paramsTypeOfMakeMarks } from "./types";
-import { deactivator } from "./scheduler/send-prayer-times";
-import { makeMessage } from "./scheduler/send-prayer-times";
+import { makeMessage } from "./services/make-message";
+import { deactivator } from "./services/deactivator";
 import { ParseMode } from "@grammyjs/types/message";
 import { webhookCallback } from "grammy";
 import { InlineKeyboard } from "grammy";
@@ -617,3 +617,7 @@ bot.catch(async (err) => {
 });
 
 export const handleUpdate = webhookCallback(bot, "hono");
+
+// export function startBot() {
+//     return bot.start();
+// }

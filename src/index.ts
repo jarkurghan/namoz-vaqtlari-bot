@@ -7,3 +7,7 @@ app.post("/bot", async (c) => await handleUpdate(c));
 app.get("/", (c) => c.text("Hello Hono!"));
 
 export default app;
+
+// import { startBot } from "./bot";
+
+// startBot();
