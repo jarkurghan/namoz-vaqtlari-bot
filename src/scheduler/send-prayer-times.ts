@@ -1,10 +1,10 @@
-import { bot } from "./bot";
-import { sendLog } from "./log";
-import { PrayerUser } from "./types";
-import { UserTimeData } from "./types";
-import { db } from "./db";
-import { ptu, pt } from "./db/schema";
+import { bot } from "../bot";
+import { sendLog } from "../log";
+import { PrayerUser } from "../types";
+import { UserTimeData } from "../types";
+import { ptu, pt } from "../db/schema";
 import { and, eq } from "drizzle-orm";
+import { db } from "../db";
 
 type PrayerTimeUserSelect = typeof ptu.$inferSelect;
 type PrayerTimesSelect = typeof pt.$inferSelect;
@@ -41,7 +41,7 @@ export const makeMessage = (language: number, userTime: UserTimeData): string =>
     return dateText + fajrText + sunriseText + dhuhrText + asrText + maghribText + ishaText + duaText;
 };
 
-async function mapDbUsersToPrayerUsers(rows: PrayerTimeUserSelect[]): Promise<PrayerUser[]> {
+function mapDbUsersToPrayerUsers(rows: PrayerTimeUserSelect[]): PrayerUser[] {
     return rows.map((row) => ({
         tg_id: row.tg_id ?? "",
         language: row.language ?? 0,
@@ -65,7 +65,7 @@ function mapDbPrayerTimesToUserTimeData(rows: PrayerTimesSelect[]): UserTimeData
     }));
 }
 
-export async function deactivateService(tg_id: number | string): Promise<void> {
+export async function deactivator(tg_id: number | string): Promise<void> {
     try {
         const updated = await db
             .update(ptu)
@@ -88,7 +88,9 @@ export async function deactivateService(tg_id: number | string): Promise<void> {
     }
 }
 
-export const cronJob = async (index: number): Promise<void> => {
+export const sendPrayerTimes = async (): Promise<void> => {
+    const hour = parseInt(new Date().toLocaleString("en-US", { timeZone: "Asia/Tashkent", hour: "2-digit", hour12: false }));
+
     let userRows: PrayerTimeUserSelect[] = [];
     let timeRows: PrayerTimesSelect[] = [];
 
@@ -96,7 +98,7 @@ export const cronJob = async (index: number): Promise<void> => {
         userRows = await db
             .select()
             .from(ptu)
-            .where(and(eq(ptu.time, index), eq(ptu.is_active, true)));
+            .where(and(eq(ptu.time, hour), eq(ptu.is_active, true)));
     } catch (error) {
         const message = "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
         await sendLog(message);
@@ -111,7 +113,7 @@ export const cronJob = async (index: number): Promise<void> => {
         return;
     }
 
-    const typedUsers = await mapDbUsersToPrayerUsers(userRows);
+    const typedUsers = mapDbUsersToPrayerUsers(userRows);
     const typedTimes = mapDbPrayerTimesToUserTimeData(timeRows);
 
     let counter = 0;
@@ -129,12 +131,14 @@ export const cronJob = async (index: number): Promise<void> => {
         } catch (error: any) {
             const errorMsg = error.message || "";
             if (errorMsg.includes("bot was blocked by the user") || errorMsg.includes("user is deactivated")) {
-                await deactivateService(user.tg_id);
+                await deactivator(user.tg_id);
             } else {
                 await sendLog(`❗️ Xabar yuborishda xato: ${errorMsg}`);
             }
         }
     }
 
-    // await sendLog(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${users.length - counter}`);
+    await sendLog(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${typedUsers.length - counter}`);
 };
+
+sendPrayerTimes();

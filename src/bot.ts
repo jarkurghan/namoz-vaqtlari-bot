@@ -1,24 +1,26 @@
-import { Bot } from "grammy";
-import { CTX } from "./types";
-import { User } from "./types";
-import { SaveUserData } from "./types";
-import { UserTimeData } from "./types";
-import { deactivateService } from "./send";
-import { makeMessage } from "./send";
+import regions from "./cities.json";
+import { paramsTypeOfMakeMarks } from "./types";
+import { deactivator } from "./scheduler/send-prayer-times";
+import { makeMessage } from "./scheduler/send-prayer-times";
+import { ParseMode } from "@grammyjs/types/message";
+import { webhookCallback } from "grammy";
+import { InlineKeyboard } from "grammy";
 import { ADMIN_ID } from "./constants";
 import { LOG_CHAT } from "./constants";
 import { BOT_TOKEN } from "./constants";
 import { ADMIN_CHAT } from "./constants";
+import { SaveUserData } from "./types";
+import { UserTimeData } from "./types";
 import { GrammyError } from "grammy";
-import { InlineKeyboard } from "grammy";
-import { paramsTypeOfMakeMarks } from "./types";
-import { ParseMode } from "@grammyjs/types/message";
 import { dontDelete } from "./log";
 import { sendLog } from "./log";
-import regions from "./cities.json";
-import { db } from "./db";
-import { ptu, pt } from "./db/schema";
+import { User } from "./types";
+import { CTX } from "./types";
+import { pt } from "./db/schema";
+import { ptu } from "./db/schema";
 import { eq } from "drizzle-orm";
+import { Bot } from "grammy";
+import { db } from "./db";
 
 type PrayerTimeUserSelect = typeof ptu.$inferSelect;
 type PrayerTimeUserInsert = typeof ptu.$inferInsert;
@@ -588,10 +590,10 @@ bot.command("broadcast", async (ctx) => {
 
                     if (error instanceof GrammyError && error.description.includes("bot was blocked by the user")) {
                         await sendLog(`Foydalanuvchi ${data[i].tg_id} botni bloklagan.`, { reply_to_message_id: msg.message_id });
-                        await deactivateService(data[i].tg_id);
+                        await deactivator(data[i].tg_id);
                     } else if (error instanceof GrammyError && error.description.includes("user is deactivated")) {
                         await sendLog(`Foydalanuvchi ${data[i].tg_id} deleted account qilgan.`, { reply_to_message_id: msg.message_id });
-                        await deactivateService(data[i].tg_id);
+                        await deactivator(data[i].tg_id);
                     } else if (error instanceof Error) {
                         await sendLog(`Xatolik yuz berdi (${data[i].tg_id}): \n${error.message}`, { reply_to_message_id: msg.message_id });
                     } else {
@@ -614,7 +616,4 @@ bot.catch(async (err) => {
     if (err.error instanceof Error) await sendLog(err.error.message);
 });
 
-/** Hozircha long polling orqali ishlaydi */
-export function startBot() {
-    return bot.start();
-}
+export const handleUpdate = webhookCallback(bot, "hono");

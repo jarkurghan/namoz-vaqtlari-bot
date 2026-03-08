@@ -1,12 +1,12 @@
 /// <reference lib="dom" />
 
-import regions from "./cities.json";
+import regions from "../cities.json";
 import { chromium } from "playwright";
-import { sendLog } from "./log";
-import { ptu } from "./db/schema";
-import { pt } from "./db/schema";
+import { sendLog } from "../log";
+import { ptu } from "../db/schema";
+import { pt } from "../db/schema";
 import { eq } from "drizzle-orm";
-import { db, sql } from "./db";
+import { db, sql } from "../db";
 
 const TARGET_URL = "https://islom.uz";
 
@@ -179,13 +179,23 @@ async function main() {
 }
 
 const success = async () => {
-    await sql.end();
-    // process.exit(0);
+    await sql.end({ timeout: 5 });
 };
 
 const end = async (err: unknown) => {
     console.error(err);
-    process.exit(1);
+    try {
+        await sql.end({ timeout: 5 });
+
+        const errorMsg = `❗️ Scheduler (send prayer times)da xatolik yuz berdi:\n\n`;
+        if (err instanceof Error) {
+            await sendLog(`${errorMsg}${err.message}`);
+        } else {
+            await sendLog(`${errorMsg}${err}`);
+        }
+    } finally {
+        process.exit(1);
+    }
 };
 
 main().then(success).catch(end);

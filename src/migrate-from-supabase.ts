@@ -1,7 +1,6 @@
 import { supabase } from "./supabase";
-import { db } from "./db";
+import { db, sql } from "./db";
 import { ptu, pt } from "./db/schema";
-import { eq } from "drizzle-orm";
 
 type SupabasePrayerTimeUser = {
     id: number;
@@ -153,6 +152,8 @@ async function main() {
     } catch (err) {
         console.error("❌ Migratsiya vaqtida xato:", err);
         process.exitCode = 1;
+    } finally {
+        await sql.end({ timeout: 5 });
     }
 }
 
