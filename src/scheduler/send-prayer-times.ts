@@ -4,7 +4,7 @@ import { PrayerUser } from "../types";
 import { UserTimeData } from "../types";
 import { ptu, pt } from "../db/schema";
 import { and, eq } from "drizzle-orm";
-import { db } from "../db";
+import { db, sql } from "../db";
 
 type PrayerTimeUserSelect = typeof ptu.$inferSelect;
 type PrayerTimesSelect = typeof pt.$inferSelect;
@@ -138,7 +138,22 @@ export const sendPrayerTimes = async (): Promise<void> => {
         }
     }
 
+    console.log(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${typedUsers.length - counter}`);
     await sendLog(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${typedUsers.length - counter}`);
 };
 
-sendPrayerTimes();
+async function main() {
+    try {
+        await sendPrayerTimes();
+        await sql.end({ timeout: 5 });
+    } catch (err) {
+        console.error(err);
+        try {
+            await sql.end({ timeout: 5 });
+        } finally {
+            process.exit(1);
+        }
+    }
+}
+
+main();
