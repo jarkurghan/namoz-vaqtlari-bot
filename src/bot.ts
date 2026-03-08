@@ -530,8 +530,13 @@ bot.callbackQuery(/prayertime/, async (ctx) => {
     }
 });
 
-bot.command("broadcast", async (ctx) => {
-    if (String(ctx.chat.id) === ADMIN_ID) {
+bot.command("broadcast", (ctx) => {
+    if (String(ctx.chat.id) !== ADMIN_ID) {
+        void bot.api.sendMessage(LOG_CHAT, "No broadcast: " + ctx.chat.id);
+        return;
+    }
+
+    void (async () => {
         const msg = await bot.api.sendMessage(LOG_CHAT, "Broadcast...");
         await ctx.reply(`Broadcast started: https://t.me/c/${LOG_CHAT.slice(4)}/${msg.message_id}`);
 
@@ -605,9 +610,13 @@ bot.command("broadcast", async (ctx) => {
 
         const message = `✅ Sozlamalar bildirishnomalari yuborildi\n\n🎯 Yuborildi: ${scs.length}\n💣 Xato: ${ers.length}\n🏆 Jami: ${counter}`;
         await sendLog(message, { reply_to_message_id: msg.message_id });
-    } else {
-        await bot.api.sendMessage(LOG_CHAT, "No broadcast: " + ctx.chat.id);
-    }
+    })().catch(async (error) => {
+        if (error instanceof Error) {
+            await sendLog(`Broadcast umumiy xatolik: ${error.message}`);
+        } else {
+            await sendLog(`Broadcast umumiy xatolik: ${String(error)}`);
+        }
+    });
 });
 
 bot.catch(async (err) => {
