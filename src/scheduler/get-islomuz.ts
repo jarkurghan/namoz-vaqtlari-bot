@@ -6,6 +6,7 @@ import { sendLog } from "../log";
 import { ptu } from "../db/schema";
 import { pt } from "../db/schema";
 import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { db, sql } from "../db";
 
 const TARGET_URL = "https://islom.uz";
@@ -87,7 +88,7 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
                     await page.click(".taqvim-city-btn");
                     await new Promise((resolve) => setTimeout(resolve, 400));
                     await page.getByText(city.name_1, { exact: true }).first().click();
-                    await page.waitForFunction(() => !document.body.innerText.includes("Юкланмоқда"), { timeout: 15000 }).catch(() => null);
+                    await page.waitForFunction(() => !document.body.innerText.includes("Юкланмоқда"), { timeout: 5000 });
                     await new Promise((resolve) => setTimeout(resolve, 500));
 
                     const times = await page.evaluate(() => {
@@ -171,7 +172,20 @@ async function main() {
         if (!rows.length) return;
 
         const set = [...new Set(rows.filter((e) => e.city != null).map((e) => String(e.city)))];
-        await getPrayerTimesFromIslomUz(set);
+
+        const cityIdsNumber = set.map((id) => Number(id));
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+
+        const prayerTimeRows = await db.select({ city: pt.city, updated_date: pt.updated_date }).from(pt).where(inArray(pt.city, cityIdsNumber));
+
+        const citiesToUpdate = set.filter((cityIdStr) => {
+            const row = prayerTimeRows.find((r) => r.city === Number(cityIdStr))!;
+            return row.updated_date < oneHourAgo;
+        });
+
+        if (!citiesToUpdate.length) return;
+
+        await getPrayerTimesFromIslomUz(citiesToUpdate);
         return;
     } catch (error) {
         console.error(error);

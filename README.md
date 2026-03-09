@@ -4,36 +4,37 @@ Bot foydalanuvchilarga har kuni ularning tanlagan hududi va vaqti bo'yicha kunli
 
 ## ✨ Xususiyatlar
 
--   **🌐 Ikki tilli interfeys:** O'zbekcha (Lotin va Kirill alifbosida) til tanlash.
--   **📍 Hudud tanlash:** Foydalanuvchi o'zi yashaydigan shaharni tanlashi mumkin.
--   **⏰ Vaqtni sozlash:** Xabarnoma yuboriladigan aniq soatni belgilash.
--   **🔄 Sozlamalarni o'zgartirish:** Til, hudud, vaqt va obuna holatini o'zgartirish.
--   **✅ Obunani boshqarish:** Xabarnomalarni to'xtatish va qayta tiklash.
--   **🛠 Notification:** Yangi foydalanuvchi haqida adminga xabar yuborish.
--   **💣 Log:** Xatolik haqida admin log chatiga xabar yuborish.
--   **⏰ Broadcast:** Sozlamalar tugatilmagan userlar uchun bildirishnoma yuborish.
--   **🕌 Jadval bo'yicha yuborish:** Kunlik namoz vaqtlarini belgilangan vaqtda avtomatik yuborish uchun jadval (cron job) funksiyasi.
+- **🌐 Ikki tilli interfeys:** O'zbekcha (Lotin va Kirill alifbosida) til tanlash.
+- **📍 Hudud tanlash:** Foydalanuvchi o'zi yashaydigan shaharni tanlashi mumkin.
+- **⏰ Vaqtni sozlash:** Xabarnoma yuboriladigan aniq soatni belgilash.
+- **🔄 Sozlamalarni o'zgartirish:** Til, hudud, vaqt va obuna holatini o'zgartirish.
+- **✅ Obunani boshqarish:** Xabarnomalarni to'xtatish va qayta tiklash.
+- **🛠 Notification:** Yangi foydalanuvchi haqida adminga xabar yuborish.
+- **💣 Log:** Xatolik haqida admin log chatiga xabar yuborish.
+- **⏰ Broadcast:** Sozlamalar tugatilmagan userlar uchun bildirishnoma yuborish.
+- **🕌 Jadval bo'yicha yuborish:** Kunlik namoz vaqtlarini belgilangan vaqtda avtomatik yuborish uchun jadval (cron job) funksiyasi.
 
 ## ⚙️ Texnologiyalar
 
--   **Telegram Bot API**
--   **grammY** — Telegram bot uchun.
--   **Supabase** — Ma'lumotlar bazasi.
--   **Playwright** — Namoz vaqtlarini saytidan olish uchun.
+- **Telegram Bot API**
+- **grammY** — Telegram bot uchun.
+- **PostgreSQL** — Ma'lumotlar bazasi.
+- **Drizzle ORM** — TypeScript ORM (PostgreSQL uchun).
+- **Playwright** — Namoz vaqtlarini olish uchun.
 
 ## 🚀 Loyihani Ishga Tushirish
 
 ### 1. Ishni boshlash uchun kerak:
 
--   **Node.js**
--   **bun** (yoki npm)
--   **Supabase** akkaunti
--   **Telegram Bot Token** (BotFather orqali olingan)
+- **Node.js**
+- **bun** (yoki npm)
+- **PostgreSQL** ma'lumotlar bazasi (`DATABASE_URL` bilan)
+- **Telegram Bot Token** (BotFather orqali olingan)
 
-### 2. Supabase Sozlamalari
+### 2. PostgreSQL (Drizzle ORM) sozlamalari
 
-1.  **Supabase**'da yangi loyiha yarating.
-2.  **`prayer_time_users`** nomli jadval yarating. Jadval quyidagi ustunlarga ega bo'lishi kerak:
+1.  **PostgreSQL**'da yangi ma'lumotlar bazasi yarating.
+2.  **`prayer_time_users`** nomli jadval yarating (yoki mavjud bazada shu jadvalni qo'shing). Jadval quyidagi ustunlarga ega bo'lishi kerak:
 
 | Ustun nomi   | Turi      | Eslatma                                |
 | :----------- | :-------- | :------------------------------------- |
@@ -66,14 +67,17 @@ Bot foydalanuvchilarga har kuni ularning tanlagan hududi va vaqti bo'yicha kunli
 
 Loyihangizda quyidagi environment variable'larini sozlang:
 
-| O'zgaruvchi             | Tavsif                                                           |
-| :---------------------- | :--------------------------------------------------------------- |
-| `BOT_TOKEN`             | Telegram bot token.                                              |
-| `SUPABASE_URL`          | Supabase URL manzili.                                            |
-| `SUPABASE_KEY`          | Supabase key.                                                    |
-| `ADMIN_CHAT_ID`         | Yangi foydalanuvchi haqida xabar yuborish uchun admin chat IDsi. |
-| `ADMIN_PRIVATE_CHAT_ID` | Broadcast uchun - telegram akkount IDsi.                         |
-| `LOG_CHAT_ID`           | Xatolik haqida xabar yuborish uchun admin log chat IDsi.         |
+| O'zgaruvchi             | Tavsif                                                                 |
+| :---------------------- | :--------------------------------------------------------------------- |
+| `BOT_TOKEN`             | Telegram bot token.                                                    |
+| `ADMIN_CHAT_ID`         | Yangi foydalanuvchi haqida xabar yuborish uchun admin chat IDsi.       |
+| `ADMIN_PRIVATE_CHAT_ID` | Broadcast uchun - telegram akkount IDsi.                               |
+| `LOG_CHAT_ID`           | Xatolik haqida xabar yuborish uchun admin log chat IDsi.               |
+| `DB_HOST`               | PostgreSQL server hostname yoki IP manzili (masalan: `127.0.0.1`).     |
+| `DB_PORT`               | PostgreSQL porti (masalan: `5432`).                                    |
+| `DB_USER`               | PostgreSQL foydalanuvchi nomi.                                         |
+| `DB_PASSWORD`           | PostgreSQL foydalanuvchi paroli.                                       |
+| `DB_NAME`               | Foydalaniladigan ma'lumotlar bazasi nomi.                              |
 
 ### 4. Loyihani deploy
 
