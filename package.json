@@ -15,7 +15,6 @@
     },
     "dependencies": {
         "@grammyjs/types": "^3.22.2",
-        "@supabase/supabase-js": "^2.84.0",
         "drizzle-orm": "^0.45.1",
         "grammy": "^1.38.4",
         "hono": "^4.11.3",
