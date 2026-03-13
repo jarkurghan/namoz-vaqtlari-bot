@@ -27,7 +27,6 @@ export const sendToAllUsers = async (): Promise<void> => {
     let failed = 0;
 
     for (const user of users) {
-        if (user.tg_id != ADMIN_ID) continue;
         try {
             const lang = Number(user.language) === 1 ? 1 : 2;
             const message = getBroadcastMessage(lang);
