@@ -1,4 +1,4 @@
-import { UserTimeData } from "../types";
+import { UserTimeData } from "../utils/types";
 
 export const makeMessage = (language: number, userTime: UserTimeData): string => {
     const isLatn = language == 2;

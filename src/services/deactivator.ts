@@ -1,6 +1,6 @@
-import { sendLog } from "../log";
+import { sendLog } from "./log";
+import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { ptu } from "../db/schema";
-import { eq } from "drizzle-orm";
 import { db } from "../db";
 
 export async function deactivator(tg_id: number | string): Promise<void> {

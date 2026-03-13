@@ -1,6 +1,7 @@
 import { ParseMode } from "@grammyjs/types";
 import { CallbackQueryContext } from "grammy";
 import { CommandContext } from "grammy";
+import { pt, ptu } from "../db/schema";
 import { Context } from "grammy";
 
 export interface User {
@@ -18,7 +19,7 @@ export interface User {
 type st = number | string | undefined;
 export type SaveUserData = { city?: st; time?: st; language?: st; is_active?: boolean; utm?: string };
 
-export type CTX = CommandContext<Context> | CallbackQueryContext<Context>;
+export type CTX = CommandContext<Context> | CallbackQueryContext<Context> | Context;
 
 export type paramsTypeOfMakeMarks =
     | { key: "lang"; lang?: number }
@@ -48,4 +49,35 @@ export interface PrayerUser {
     city: string;
     is_active: boolean;
     time: number;
+}
+
+export type PrayerTimesSelect = typeof pt.$inferSelect;
+export type PrayerTimeUserSelect = typeof ptu.$inferSelect;
+
+export function mapDbUserToUser(row: PrayerTimeUserSelect): User {
+    return {
+        id: row.id,
+        tg_id: row.tg_id ?? "",
+        first_name: row.first_name ?? "",
+        last_name: row.last_name ?? null,
+        username: row.username ?? null,
+        city: row.city ?? undefined,
+        time: row.time ?? undefined,
+        language: row.language ?? undefined,
+        is_active: row.is_active ?? undefined,
+    };
+}
+
+export function mapDbPrayerTimeToUserTimeData(row: PrayerTimesSelect): UserTimeData {
+    return {
+        date_text_uz: row.date_text_uz,
+        date_text_cyrl: row.date_text_cyrl,
+        tong: row.tong,
+        quyosh: row.quyosh,
+        peshin: row.peshin,
+        asr: row.asr,
+        shom: row.shom,
+        xufton: row.xufton,
+        city: String(row.city),
+    };
 }

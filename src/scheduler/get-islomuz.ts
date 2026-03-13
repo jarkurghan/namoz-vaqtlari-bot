@@ -1,13 +1,14 @@
 /// <reference lib="dom" />
 
-import regions from "../cities.json";
+import regions from "../utils/cities.json";
 import { chromium } from "playwright";
-import { sendLog } from "../log";
+import { inArray } from "drizzle-orm/sql/expressions/conditions";
+import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { ptu } from "../db/schema";
 import { pt } from "../db/schema";
-import { eq } from "drizzle-orm";
-import { inArray } from "drizzle-orm";
-import { db, sql } from "../db";
+import { sendLog } from "../services/log";
+import { sql } from "../db";
+import { db } from "../db";
 
 const TARGET_URL = "https://islom.uz";
 
@@ -75,9 +76,7 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
         console.log("Namoz vaqtlari olish...");
         const timestamp = Date.now();
 
-        console.log(61, cityIds.length);
         const cities = regions.filter((c) => cityIds.includes(c.id));
-        console.log(63, cities.length);
 
         for (let i = 0; i < cities.length; i++) {
             try {

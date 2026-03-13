@@ -1,6 +1,6 @@
-import { LOG_CHAT } from "./constants";
-import { CTX, LogOptions } from "./types";
-import { bot } from "./bot";
+import { LOG_CHAT } from "../utils/constants";
+import { CTX, LogOptions } from "../utils/types";
+import { bot } from "../bot";
 
 /** HTML parse_mode da < va > belgilari xatolik beradi — escape qilamiz */
 function escapeForTelegramHtml(text: string): string {
@@ -21,24 +21,6 @@ export const sendLog = async (message: string, options?: LogOptions): Promise<vo
                 parse_mode: parse_mode,
             });
         }
-    } catch (error) {
-        console.error("System error:", error);
-    }
-};
-
-export const dontDelete = async (ctx: CTX, error: unknown): Promise<void> => {
-    try {
-        const forwardedLog = await ctx.forwardMessage(LOG_CHAT);
-        const reply_to_message_id = forwardedLog.message_id;
-
-        const userInfo =
-            `👤 Ism: ${ctx.chat?.first_name || "Noma'lum"} ${ctx.chat?.last_name || ""}\n` +
-            `🔗 Username: ${ctx.chat?.username ? `@${ctx.chat?.username}` : "Noma'lum"}\n` +
-            `🆔 ID: ${ctx.chat?.id}`;
-        await bot.api.sendMessage(LOG_CHAT, userInfo, { reply_to_message_id });
-
-        const errMsg = "Unable to delete message: " + (error instanceof Error ? error.message : error);
-        await bot.api.sendMessage(LOG_CHAT, errMsg, { reply_to_message_id });
     } catch (error) {
         console.error("System error:", error);
     }

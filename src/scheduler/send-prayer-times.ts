@@ -1,15 +1,17 @@
 import { bot } from "../bot";
-import { sendLog } from "../log";
-import { PrayerUser } from "../types";
-import { UserTimeData } from "../types";
+import { sendLog } from "../services/log";
+import { PrayerUser } from "../utils/types";
+import { UserTimeData } from "../utils/types";
+import { PrayerTimesSelect } from "../utils/types";
+import { PrayerTimeUserSelect } from "../utils/types";
 import { makeMessage } from "../services/make-message";
 import { deactivator } from "../services/deactivator";
-import { ptu, pt } from "../db/schema";
-import { and, eq } from "drizzle-orm";
-import { db, sql } from "../db";
-
-type PrayerTimeUserSelect = typeof ptu.$inferSelect;
-type PrayerTimesSelect = typeof pt.$inferSelect;
+import { eq } from "drizzle-orm/sql/expressions/conditions";
+import { and } from "drizzle-orm/sql/expressions/conditions";
+import { ptu } from "../db/schema";
+import { pt } from "../db/schema";
+import { sql } from "../db";
+import { db } from "../db";
 
 function mapDbUsersToPrayerUsers(rows: PrayerTimeUserSelect[]): PrayerUser[] {
     return rows.map((row) => ({
