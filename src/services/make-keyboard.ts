@@ -59,17 +59,17 @@ function getRegsKeyboard(lang: number, vil_code: number) {
     return keyboard;
 }
 
-function getSettingsKeyboard(lang: number, is_active: boolean) {
+function getSettingsKeyboard(lang: number, is_service_active: boolean) {
     const langText = lang === 1 ? "Тилни ўзгартириш" : "Tilni o'zgartirish";
     const regionText = lang === 1 ? "Ҳудудни ўзгартириш" : "Hududni o'zgartirish";
     const timeText = lang === 1 ? "Юбориш вақтини ўзгартириш" : "Yuborish vaqtini o'zgartirish";
-    const subText = lang === 1 ? (is_active ? "Обунани тўхтатиш" : "Обунани тиклаш") : is_active ? "Obunani toʻxtatish" : "Obunani tiklash";
+    const subText = lang === 1 ? (is_service_active ? "Обунани тўхтатиш" : "Обунани тиклаш") : is_service_active ? "Obunani toʻxtatish" : "Obunani tiklash";
 
     const keyboard = new InlineKeyboard();
     keyboard.text(langText, `language`).row();
     keyboard.text(regionText, `vils`).row();
     keyboard.text(timeText, `vaqt`).row();
-    keyboard.text(subText, `subscribe_${!is_active}`).row();
+    keyboard.text(subText, `subscribe_${!is_service_active}`).row();
     keyboard.text(lang === 2 ? "✅ Tayyor" : "✅ Тайёр", `dashboard`).row();
 
     return keyboard;
@@ -86,15 +86,15 @@ async function getDashboardKeyboard(lang: number, city: number) {
 async function getDashboardMessage(user: User) {
     const city = regions.find((e) => e.id == user.city) as { id: string; name_1: string; name_2: string };
     const hour = (user.time as number).toString().padStart(2, "0");
-    const is_active_city = await isActiveCity(Number(city.id));
+    const is_city_active = await isActiveCity(Number(city.id));
 
     return user.language === 2
-        ? `${is_active_city ? "Har kuni" : "Ertadan boshlab har kuni"}` +
+        ? `${is_city_active ? "Har kuni" : "Ertadan boshlab har kuni"}` +
               ` soat <b>${hour}:00</b>da sizga ${city.name_2} vaqti bo‘yicha kunlik namoz vaqtlari yuboriladi.` +
-              `${user.is_active ? "" : "\n\nEslatma: Siz hozirda obunani toʻxtatgansiz, namoz vaqtlari yuborilmaydi."}`
-        : `${is_active_city ? "Ҳар куни" : "Эртадан бошлаб ҳар куни"}` +
+              `${user.status === "active" ? "" : "\n\nEslatma: Siz hozirda obunani toʻxtatgansiz, namoz vaqtlari yuborilmaydi."}`
+        : `${is_city_active ? "Ҳар куни" : "Эртадан бошлаб ҳар куни"}` +
               ` соат <b>${hour}:00</b>да сизга ${city.name_1} вақти бўйича кунлик намоз вақтлари юборилади.` +
-              `${user.is_active ? "" : "\n\nЭслатма: Сиз ҳозирда обунани тўхтатгансиз, намоз вақтлари юборилмайди."}`;
+              `${user.status === "active" ? "" : "\n\nЭслатма: Сиз ҳозирда обунани тўхтатгансиз, намоз вақтлари юборилмайди."}`;
 }
 
 function getSettingsMessage(user: User) {
@@ -106,12 +106,12 @@ function getSettingsMessage(user: User) {
               "Til: 🇺🇿 Oʻzbekcha\n" +
               `Hudud: ${city.name_2}\n` +
               `Tarqatma vaqti: ${hour}:00` +
-              `${user.is_active ? "" : "\nTarqatma holati: O'chirilgan"}`
+              `${user.status === "active" ? "" : "\nTarqatma holati: O'chirilgan"}`
         : "Ҳозирги созламалар:\n\n" +
               "Тил: 🇺🇿 Ўзбекча\n" +
               `Ҳудуд: ${city.name_1}\n` +
               `Тарқатма вақти: ${hour}:00` +
-              `${user.is_active ? "" : "\nТарқатма ҳолати: Ўчирилган"}`;
+              `${user.status === "active" ? "" : "\nТарқатма ҳолати: Ўчирилган"}`;
 }
 
 export const MESSAGES = {
@@ -145,7 +145,7 @@ export async function makeMarks(options: paramsTypeOfMakeMarks): Promise<{ reply
         case "reg":
             return { reply_markup: getRegsKeyboard(options.lang, options.vil), parse_mode: "HTML" };
         case "settings":
-            return { reply_markup: getSettingsKeyboard(options.lang, options.is_active), parse_mode: "HTML" };
+            return { reply_markup: getSettingsKeyboard(options.lang, options.is_service_active), parse_mode: "HTML" };
         case "dashboard":
             return { reply_markup: await getDashboardKeyboard(options.lang, options.city), parse_mode: "HTML" };
     }

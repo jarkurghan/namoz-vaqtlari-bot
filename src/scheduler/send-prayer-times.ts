@@ -5,8 +5,8 @@ import { UserTimeData } from "../utils/types";
 import { PrayerTimesSelect } from "../utils/types";
 import { PrayerTimeUserSelect } from "../utils/types";
 import { makeMessage } from "../services/make-message";
-import { changeStatus, deactivator } from "../services/deactivator";
-import { eq, or } from "drizzle-orm/sql/expressions/conditions";
+import { changeStatus } from "../services/deactivator";
+import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { and } from "drizzle-orm/sql/expressions/conditions";
 import { ptu } from "../db/schema";
 import { pt } from "../db/schema";
@@ -18,7 +18,6 @@ function mapDbUsersToPrayerUsers(rows: PrayerTimeUserSelect[]): PrayerUser[] {
         tg_id: row.tg_id ?? "",
         language: row.language ?? 0,
         city: String(row.city ?? ""),
-        is_active: row.is_active ?? false,
         time: row.time ?? 0,
     }));
 }
@@ -47,7 +46,7 @@ export const sendPrayerTimes = async (): Promise<void> => {
         userRows = await db
             .select()
             .from(ptu)
-            .where(and(eq(ptu.time, hour), or(eq(ptu.is_active, true), eq(ptu.status, "active"))));
+            .where(and(eq(ptu.time, hour), eq(ptu.status, "active")));
     } catch (error) {
         const message = "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
         await sendLog(message);
@@ -80,10 +79,8 @@ export const sendPrayerTimes = async (): Promise<void> => {
         } catch (error: any) {
             const errorMsg = error.message || "";
             if (errorMsg.includes("bot was blocked by the user")) {
-                await deactivator(user.tg_id);
                 await changeStatus(user.tg_id, "has_blocked");
             } else if (errorMsg.includes("user is deactivated")) {
-                await deactivator(user.tg_id);
                 await changeStatus(user.tg_id, "deleted_account");
             } else {
                 await sendLog(`❗️ Xabar yuborishda xato: ${errorMsg}`);

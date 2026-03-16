@@ -2,7 +2,7 @@
 
 import regions from "../utils/cities.json";
 import { chromium } from "playwright";
-import { inArray, or } from "drizzle-orm/sql/expressions/conditions";
+import { inArray } from "drizzle-orm/sql/expressions/conditions";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { ptu } from "../db/schema";
 import { pt } from "../db/schema";
@@ -166,10 +166,7 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
 
 async function main() {
     try {
-        const rows = await db
-            .select({ city: ptu.city })
-            .from(ptu)
-            .where(or(eq(ptu.is_active, true), eq(ptu.status, "active")));
+        const rows = await db.select({ city: ptu.city }).from(ptu).where(eq(ptu.status, "active"));
 
         if (!rows.length) return;
 

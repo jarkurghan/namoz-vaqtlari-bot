@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { ADMIN_CHAT } from "../utils/constants";
-import { SaveUserData } from "../utils/types";
+import { SaveUserData, Status } from "../utils/types";
 import { sendLog } from "./log";
 import { User } from "../utils/types";
 import { ptu } from "../db/schema";
@@ -21,7 +21,7 @@ function mapDbUserToUser(row: PrayerTimeUserSelect): User {
         city: row.city ?? undefined,
         time: row.time ?? undefined,
         language: row.language ?? undefined,
-        is_active: row.is_active ?? undefined,
+        status: row.status as Status,
     };
 }
 
@@ -44,12 +44,9 @@ export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
     if (data && data.language) userData.language = data.language;
     if (data && data.city) userData.city = data.city;
     if (data && (typeof data.time === "number" || typeof data.time === "string")) userData.time = data.time;
-    if (data && typeof data.is_active === "boolean") {
-        userData.is_active = data.is_active;
-        userData.status = data.is_active ? "active" : "inactive";
-    }
+    if (data && data.status) userData.status = data.status;
 
-    if (userData.language && userData.city && userData.time && userData.status === "new") {
+    if (userData.language && userData.city && userData.time && data?.status === "new") {
         userData.status = "active";
     }
 

@@ -1,4 +1,4 @@
-import { bigint, boolean, integer, pgTable, text, varchar, index, uniqueIndex, timestamp } from "drizzle-orm/pg-core";
+import { bigint, integer, pgTable, text, varchar, index, uniqueIndex, timestamp } from "drizzle-orm/pg-core";
 
 export const ptu = pgTable(
     "prayer_time_users",
@@ -11,8 +11,9 @@ export const ptu = pgTable(
         city: integer("city"),
         language: integer("language"),
         time: integer("time"),
-        is_active: boolean("is_active").notNull().default(true),
-        status: text("status", { enum: ["new", "active", "inactive", "deleted_account", "has_blocked", "other"] }),
+        status: text("status", { enum: ["new", "active", "inactive", "deleted_account", "has_blocked", "other"] })
+            .default("new")
+            .notNull(),
         created_at: timestamp("created_at").defaultNow().notNull(),
         updated_at: timestamp("updated_at")
             .defaultNow()

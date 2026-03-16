@@ -1,7 +1,7 @@
 import type { CommandContext, Context } from "grammy";
 import { GrammyError, InlineKeyboard } from "grammy";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
-import { changeStatus, deactivator } from "../services/deactivator";
+import { changeStatus } from "../services/deactivator";
 import { sendLog } from "../services/log";
 import { PrayerTimeUserSelect, mapDbUserToUser } from "../utils/types";
 import { ADMIN_ID, LOG_CHAT } from "../utils/constants";
@@ -74,11 +74,9 @@ export async function registerBroadcastCommand(ctx: CommandContext<Context>) {
 
                     if (error instanceof GrammyError && error.description.includes("bot was blocked by the user")) {
                         await sendLog(`Foydalanuvchi ${userLink(data[i])} botni bloklagan.`, { reply_to_message_id: msg.message_id });
-                        await deactivator(data[i].tg_id);
                         await changeStatus(data[i].tg_id, "has_blocked");
                     } else if (error instanceof GrammyError && error.description.includes("user is deactivated")) {
                         await sendLog(`Foydalanuvchi ${userLink(data[i])} deleted account qilgan.`, { reply_to_message_id: msg.message_id });
-                        await deactivator(data[i].tg_id);
                         await changeStatus(data[i].tg_id, "deleted_account");
                     } else if (error instanceof Error) {
                         await sendLog(`Xatolik yuz berdi (${userLink(data[i])}): \n${error.message}`, { reply_to_message_id: msg.message_id });

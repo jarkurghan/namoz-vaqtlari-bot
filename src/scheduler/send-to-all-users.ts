@@ -38,17 +38,8 @@ export const sendToAllUsers = async (): Promise<void> => {
     let failed = 0;
 
     for (const user of users) {
+        if (user.status === "has_blocked" || user.status === "deleted_account") continue;
         try {
-            if (user.city && user.time && user.language) {
-                if (user.is_active === false) {
-                    await changeStatus(user.tg_id, "inactive");
-                } else {
-                    await changeStatus(user.tg_id, "active");
-                }
-            } else {
-                await changeStatus(user.tg_id, "new");
-            }
-
             const lang = Number(user.language) === 1 ? 1 : 2;
             const message = broadcastMessageQadrKechasi(lang);
             const replyMarkup = await makeDashboardReplyKeyboard(lang, user.city, activeCities);

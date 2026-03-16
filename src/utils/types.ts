@@ -14,11 +14,10 @@ export interface User {
     time?: number | string;
     language?: number | string;
     status?: string;
-    is_active?: boolean;
 }
 
 type st = number | string | undefined;
-export type SaveUserData = { city?: st; time?: st; language?: st; is_active?: boolean; utm?: string; status?: string };
+export type SaveUserData = { city?: st; time?: st; language?: st; utm?: string; status?: string };
 
 export type CTX = CommandContext<Context> | CallbackQueryContext<Context> | Context;
 
@@ -27,7 +26,7 @@ export type paramsTypeOfMakeMarks =
     | { key: "time"; lang: number; is_back?: boolean }
     | { key: "vil"; lang: number; is_back?: boolean }
     | { key: "reg"; lang: number; vil: number }
-    | { key: "settings"; lang: number; is_active: boolean }
+    | { key: "settings"; lang: number; is_service_active: boolean }
     | { key: "dashboard"; lang: number; city: number };
 
 export type LogOptions = { parse_mode?: ParseMode; reply_to_message_id?: number };
@@ -48,7 +47,6 @@ export interface PrayerUser {
     tg_id: number | string;
     language: number;
     city: string;
-    is_active: boolean;
     time: number;
 }
 
@@ -65,7 +63,6 @@ export function mapDbUserToUser(row: PrayerTimeUserSelect): User {
         city: row.city ?? undefined,
         time: row.time ?? undefined,
         language: row.language ?? undefined,
-        is_active: row.is_active ?? undefined,
     };
 }
 

@@ -1,13 +1,24 @@
 import type { CallbackQueryContext, Context } from "grammy";
 import { makeMarks, MESSAGES } from "../services/make-keyboard";
 import { makeDashboardReplyKeyboard } from "../services/make-reply-keyboard";
+import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { saveUser } from "../services/save-user";
+import { Status } from "../utils/types";
+import { ptu } from "../db/schema";
 import { bot } from "../bot";
+import { db } from "../db";
 
 export async function registerTimeCallback(ctx: CallbackQueryContext<Context>) {
     const time = ctx.callbackQuery.data.split("_")[1];
 
-    const [user] = await saveUser(ctx, { time });
+    const tg_id = ctx.from.id;
+    const [userStatus] = await db
+        .select()
+        .from(ptu)
+        .where(eq(ptu.tg_id, String(tg_id)))
+        .limit(1);
+
+    const [user] = await saveUser(ctx, { time, status: userStatus?.status as Status });
 
     if (!user.language) {
         await ctx.deleteMessage().catch((err) => console.log(err));
