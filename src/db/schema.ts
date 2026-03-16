@@ -12,8 +12,11 @@ export const ptu = pgTable(
         language: integer("language"),
         time: integer("time"),
         is_active: boolean("is_active").notNull().default(true),
+        status: text("status", { enum: ["new", "active", "inactive", "deleted_account", "has_blocked", "other"] }),
         created_at: timestamp("created_at").defaultNow().notNull(),
-        updated_at: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+        updated_at: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => new Date()),
     },
     (table) => [uniqueIndex("users_namoz_vaqtlari_bot_tg_id_unique").on(table.tg_id)],
 );

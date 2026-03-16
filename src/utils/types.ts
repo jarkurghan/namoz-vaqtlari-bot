@@ -13,11 +13,12 @@ export interface User {
     city?: number | string;
     time?: number | string;
     language?: number | string;
+    status?: string;
     is_active?: boolean;
 }
 
 type st = number | string | undefined;
-export type SaveUserData = { city?: st; time?: st; language?: st; is_active?: boolean; utm?: string };
+export type SaveUserData = { city?: st; time?: st; language?: st; is_active?: boolean; utm?: string; status?: string };
 
 export type CTX = CommandContext<Context> | CallbackQueryContext<Context> | Context;
 
@@ -81,3 +82,5 @@ export function mapDbPrayerTimeToUserTimeData(row: PrayerTimesSelect): UserTimeD
         city: String(row.city),
     };
 }
+
+export type Status = "new" | "active" | "inactive" | "deleted_account" | "has_blocked" | "other";

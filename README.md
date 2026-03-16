@@ -46,7 +46,7 @@ Bot foydalanuvchilarga har kuni ularning tanlagan hududi va vaqti bo'yicha kunli
 | `city`       | `int`     | Tanlangan shahar IDsi                  |
 | `time`       | `int`     | Xabarnoma yuborish vaqti (soat)        |
 | `language`   | `int`     | Til kodi (1 - Kirill, 2 - Lotin)       |
-| `is_active`  | `boolean` | Obuna holati (default: true)           |
+| `status`     | `VARCHAR` | Obuna (foydalanuvchi) holati           |
 
 3.  **`prayer_times`** nomli jadval yarating. Jadval quyidagi ustunlarga ega bo'lishi kerak:
 
@@ -67,17 +67,17 @@ Bot foydalanuvchilarga har kuni ularning tanlagan hududi va vaqti bo'yicha kunli
 
 Loyihangizda quyidagi environment variable'larini sozlang:
 
-| O'zgaruvchi             | Tavsif                                                                 |
-| :---------------------- | :--------------------------------------------------------------------- |
-| `BOT_TOKEN`             | Telegram bot token.                                                    |
-| `ADMIN_CHAT_ID`         | Yangi foydalanuvchi haqida xabar yuborish uchun admin chat IDsi.       |
-| `ADMIN_PRIVATE_CHAT_ID` | Broadcast uchun - telegram akkount IDsi.                               |
-| `LOG_CHAT_ID`           | Xatolik haqida xabar yuborish uchun admin log chat IDsi.               |
-| `DB_HOST`               | PostgreSQL server hostname yoki IP manzili (masalan: `127.0.0.1`).     |
-| `DB_PORT`               | PostgreSQL porti (masalan: `5432`).                                    |
-| `DB_USER`               | PostgreSQL foydalanuvchi nomi.                                         |
-| `DB_PASSWORD`           | PostgreSQL foydalanuvchi paroli.                                       |
-| `DB_NAME`               | Foydalaniladigan ma'lumotlar bazasi nomi.                              |
+| O'zgaruvchi             | Tavsif                                                             |
+| :---------------------- | :----------------------------------------------------------------- |
+| `BOT_TOKEN`             | Telegram bot token.                                                |
+| `ADMIN_CHAT_ID`         | Yangi foydalanuvchi haqida xabar yuborish uchun admin chat IDsi.   |
+| `ADMIN_PRIVATE_CHAT_ID` | Broadcast uchun - telegram akkount IDsi.                           |
+| `LOG_CHAT_ID`           | Xatolik haqida xabar yuborish uchun admin log chat IDsi.           |
+| `DB_HOST`               | PostgreSQL server hostname yoki IP manzili (masalan: `127.0.0.1`). |
+| `DB_PORT`               | PostgreSQL porti (masalan: `5432`).                                |
+| `DB_USER`               | PostgreSQL foydalanuvchi nomi.                                     |
+| `DB_PASSWORD`           | PostgreSQL foydalanuvchi paroli.                                   |
+| `DB_NAME`               | Foydalaniladigan ma'lumotlar bazasi nomi.                          |
 
 ### 4. Loyihani deploy
 

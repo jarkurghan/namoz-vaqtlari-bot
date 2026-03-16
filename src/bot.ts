@@ -14,9 +14,12 @@ import { registerPrayertimeCallback } from "./handlers/action-prayertime-callbac
 import { registerBroadcastCommand } from "./handlers/register-broadcast-command";
 import { registerErrorHandler } from "./handlers/register-error-handler";
 import { registerTimeCallback } from "./handlers/select-time-callback";
+import { autoRetry } from "@grammyjs/auto-retry";
 
 if (!BOT_TOKEN) throw new Error("BOT_TOKEN topilmadi!");
 export const bot = new Bot(BOT_TOKEN);
+
+bot.api.config.use(autoRetry());
 
 bot.command("start", registerStartCommand);
 bot.callbackQuery(/lang_(2|1)/, registerLangCallback);

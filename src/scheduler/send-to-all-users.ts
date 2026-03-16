@@ -1,22 +1,33 @@
 import { bot } from "../bot";
 import { db, sql } from "../db";
-import { ptu } from "../db/schema";
+import { pt, ptu } from "../db/schema";
 import { sendLog } from "../services/log";
 import { mapDbUserToUser } from "../utils/types";
 import { PrayerTimeUserSelect } from "../utils/types";
-import { getBroadcastMessage } from "../services/make-reply-keyboard";
+import { broadcastMessageQadrKechasi } from "../services/make-reply-keyboard";
 import { makeDashboardReplyKeyboard } from "../services/make-reply-keyboard";
-import { deactivator } from "../services/deactivator";
-import { GrammyError, InputFile } from "grammy";
-import { ADMIN_ID } from "../utils/constants";
+import { changeStatus } from "../services/deactivator";
+import { userLink } from "../services/save-user";
+import { GrammyError } from "grammy";
 
 export const sendToAllUsers = async (): Promise<void> => {
     let rows: PrayerTimeUserSelect[] = [];
+    let activeCities: number[] = [];
 
     try {
         rows = await db.select().from(ptu);
     } catch (error) {
         const message = "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
+        await sendLog(message);
+        return;
+    }
+
+    try {
+        const currentTimestamp = new Date().getTime();
+        const cities = await db.select({ city: pt.city, updated_date: pt.updated_date }).from(pt);
+        activeCities = [...new Set(cities.filter((e) => 86400000 > currentTimestamp - new Date(e.updated_date).getTime()).map((e) => e.city))];
+    } catch (error) {
+        const message = "❗️ prayer_times jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
         await sendLog(message);
         return;
     }
@@ -28,14 +39,20 @@ export const sendToAllUsers = async (): Promise<void> => {
 
     for (const user of users) {
         try {
+            if (user.city && user.time && user.language) {
+                if (user.is_active === false) {
+                    await changeStatus(user.tg_id, "inactive");
+                } else {
+                    await changeStatus(user.tg_id, "active");
+                }
+            } else {
+                await changeStatus(user.tg_id, "new");
+            }
+
             const lang = Number(user.language) === 1 ? 1 : 2;
-            const message = getBroadcastMessage(lang);
-            const replyMarkup = await makeDashboardReplyKeyboard(lang, user.city);
-            const photo = new InputFile("src/utils/image-01-send-to-all-users.png");
-            await bot.api.sendPhoto(user.tg_id, photo, { caption: message, reply_markup: replyMarkup, parse_mode: "HTML" });
-
-            await new Promise((resolve) => setTimeout(resolve, 200));
-
+            const message = broadcastMessageQadrKechasi(lang);
+            const replyMarkup = await makeDashboardReplyKeyboard(lang, user.city, activeCities);
+            await bot.api.sendMessage(user.tg_id, message, { reply_markup: replyMarkup, parse_mode: "HTML" });
             sent++;
         } catch (error) {
             failed++;
@@ -43,16 +60,20 @@ export const sendToAllUsers = async (): Promise<void> => {
             if (error instanceof GrammyError) {
                 const description = error.description || "";
 
-                if (description.includes("bot was blocked by the user") || description.includes("user is deactivated")) {
-                    await sendLog(`Foydalanuvchi botni bloklagan (${user.tg_id}): \n${description}`);
-                    await deactivator(user.tg_id);
+                if (description.includes("bot was blocked by the user")) {
+                    await sendLog(`Foydalanuvchi botni bloklagan (${userLink(user)}): \n${description}`);
+                    await changeStatus(user.tg_id, "has_blocked");
+                } else if (description.includes("user is deactivated")) {
+                    await sendLog(`O'chirilgan hisob (${userLink(user)}): \n${description}`);
+                    await changeStatus(user.tg_id, "deleted_account");
                 } else {
-                    await sendLog(`Xabar yuborishda xatolik (${user.tg_id}): \n${description}`);
+                    await sendLog(`Xabar yuborishda xatolik (${userLink(user)}): \n${description}`);
+                    await changeStatus(user.tg_id, "other");
                 }
             } else if (error instanceof Error) {
-                await sendLog(`Xabar yuborishda xatolik (${user.tg_id}): \n${error.message}`);
+                await sendLog(`Xabar yuborishda xatolik (${userLink(user)}): \n${error.message}`);
             } else {
-                await sendLog(`Xabar yuborishda xatolik (${user.tg_id}): \n${String(error)}`);
+                await sendLog(`Xabar yuborishda xatolik (${userLink(user)}): \n${String(error)}`);
             }
         }
     }

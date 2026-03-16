@@ -25,6 +25,11 @@ function mapDbUserToUser(row: PrayerTimeUserSelect): User {
     };
 }
 
+export function userLink(user: User): string {
+    const fullName = `${user.first_name || "Noma'lum"} ${user.last_name || ""}`;
+    return user.username ? `<a href="tg://resolve?domain=${user.username}">${fullName}</a>` : `<a href="tg://user?id=${user.tg_id}">${fullName}</a>`;
+}
+
 export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
     const user = ctx.from;
     if (!user) return [];
@@ -39,7 +44,14 @@ export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
     if (data && data.language) userData.language = data.language;
     if (data && data.city) userData.city = data.city;
     if (data && (typeof data.time === "number" || typeof data.time === "string")) userData.time = data.time;
-    if (data && typeof data.is_active === "boolean") userData.is_active = data.is_active;
+    if (data && typeof data.is_active === "boolean") {
+        userData.is_active = data.is_active;
+        userData.status = data.is_active ? "active" : "inactive";
+    }
+
+    if (userData.language && userData.city && userData.time && userData.status === "new") {
+        userData.status = "active";
+    }
 
     try {
         const [existingUser] = await db
@@ -51,12 +63,9 @@ export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
         if (!existingUser) {
             const utm = data?.utm || "-";
             const username = user.username ? `@${user.username}` : "Noma'lum";
-            const fullName = `${user.first_name || "Noma'lum"} ${user.last_name || ""}`;
-            const userLink = user.username
-                ? `<a href="tg://resolve?domain=${user.username}">${fullName}</a>`
-                : `<a href="tg://user?id=${user.id}">${fullName}</a>`;
+            const userlink = userLink(userData);
             const msg =
-                `🆕 Yangi foydalanuvchi:\n\n👤 Ism: ${userLink}\n🔗 Username: ${username}\n` +
+                `🆕 Yangi foydalanuvchi:\n\n👤 Ism: ${userlink}\n🔗 Username: ${username}\n` +
                 `🆔 ID: <code>${user.id}</code>\n🚪 Source: ${utm}\n🤖 Bot: @bugungi_namoz_bot`;
             await bot.api.sendMessage(ADMIN_CHAT, msg, { parse_mode: "HTML" });
         }

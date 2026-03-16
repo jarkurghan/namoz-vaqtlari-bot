@@ -1,30 +1,42 @@
 import { isActiveCity } from "./is-city-active";
 import { Keyboard } from "grammy";
 
-export function getBroadcastMessage(lang: number): string {
+export function broadcastMessageQadrKechasi(lang: number): string {
     if (lang === 1) {
         return (
-            "Ассалом алайкум!\n\n" +
-            "Энди ботда экраннинг пастидаги reply тугмалар орқали созламаларни ўзгартиришингиз мумкин.\n\n" +
-            "• <b>Бугунги намоз вақтлари</b> тугмаси орқали бугунги намоз вақтларини қайта олишингиз мумкин\n" +
-            "• <b>Созламалар</b> тугмаси орқали барча созламаларни кўриш ва ўзгартиришингиз мумкин."
+            "<b>Ғафлатда қолманг! Тақдирлар белгиланадиган кеча – Лайлатул қадр кечаси</b>\n\n" +
+            "https://muslim.uz/oz/e/post/17475-g-aflatda-qolmang-taqdirlar-belgilanadigan-kecha-laylatul-qadr-kechasi-3"
         );
     } else {
         return (
-            "Assalom alaykum!\n\n" +
-            "Endi botda ekran pastidagi reply tugmalar orqali sozlamalarni o'zgartirishingiz mumkin.\n\n" +
-            "• <b>Bugungi namoz vaqtlari</b> tugmasi orqali bugungi namoz vaqtlarini qayta olishingiz mumkin\n" +
-            "• <b>Sozlamalar</b> tugmasi orqali barcha sozlamalarni ko'rish va o'zgartirish mumkin."
+            "<b>G'aflatda qolmang! Taqdirlar belgilanadigan kecha – Laylatul qadr kechasi</b>\n\n" +
+            "https://muslim.uz/uz/e/post/17475-g-aflatda-qolmang-taqdirlar-belgilanadigan-kecha-laylatul-qadr-kechasi-3"
         );
     }
 }
 
-export async function makeDashboardReplyKeyboard(lang: number, city?: number | string) {
+// export function broadcastMessageIdFitr(lang: number): string {
+//     if (lang === 1) {
+//         return "Рамазон ҳайити муборак бўлсин! 🎉🎉🎉";
+//     } else {
+//         return "Ramazon hayiti muborak bo'lsin! 🎉🎉🎉";
+//     }
+// }
+
+export async function makeDashboardReplyKeyboard(lang: number, city?: number | string, activeCities?: number[]) {
     const keyboard = new Keyboard();
     const cityNumber = city ? Number(city) : NaN;
 
-    if (!Number.isNaN(cityNumber) && (await isActiveCity(cityNumber))) {
-        keyboard.text(lang === 1 ? "🕘 Бугунги намоз вақтлари" : "🕘 Bugungi namoz vaqtlari").row();
+    if (!Number.isNaN(cityNumber)) {
+        if (activeCities && activeCities.length > 0) {
+            if (activeCities.includes(cityNumber)) {
+                keyboard.text(lang === 1 ? "🕘 Бугунги намоз вақтлари" : "🕘 Bugungi namoz vaqtlari").row();
+            }
+        } else {
+            if (await isActiveCity(cityNumber)) {
+                keyboard.text(lang === 1 ? "🕘 Бугунги намоз вақтлари" : "🕘 Bugungi namoz vaqtlari").row();
+            }
+        }
     }
 
     keyboard.text(lang === 1 ? "⚙️ Созламалар" : "⚙️ Sozlamalar").row();

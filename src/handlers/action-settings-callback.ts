@@ -18,7 +18,8 @@ export async function registerSettingsCallback(ctx: CTX) {
             await ctx.deleteMessage().catch((err) => console.log(err));
             await ctx.reply(MESSAGES.SELECT_TIME[lang], await makeMarks({ key: "time", lang }));
         } else {
-            await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: "settings", lang, is_active: Boolean(user.is_active) }));
+            const is_active = user.status ? user.status === "active" : Boolean(user.is_active);
+            await ctx.reply(MESSAGES.SETTINGS(user), await makeMarks({ key: "settings", lang, is_active }));
         }
     }
 }

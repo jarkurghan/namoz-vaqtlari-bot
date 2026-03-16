@@ -1,12 +1,13 @@
 import type { CommandContext, Context } from "grammy";
 import { GrammyError, InlineKeyboard } from "grammy";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
-import { deactivator } from "../services/deactivator";
+import { changeStatus, deactivator } from "../services/deactivator";
 import { sendLog } from "../services/log";
 import { PrayerTimeUserSelect, mapDbUserToUser } from "../utils/types";
 import { ADMIN_ID, LOG_CHAT } from "../utils/constants";
 import { ptu } from "../db/schema";
 import { db } from "../db";
+import { userLink } from "../services/save-user";
 
 export async function registerBroadcastCommand(ctx: CommandContext<Context>) {
     if (String(ctx.chat.id) !== ADMIN_ID) {
@@ -20,11 +21,9 @@ export async function registerBroadcastCommand(ctx: CommandContext<Context>) {
 
         let users: PrayerTimeUserSelect[] = [];
         try {
-            users = await db.select().from(ptu).where(eq(ptu.is_active, true));
+            users = await db.select().from(ptu).where(eq(ptu.status, "new"));
         } catch (error) {
-            const message =
-                "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " +
-                (error instanceof Error ? error.message : String(error));
+            const message = "❗️ prayer_time_users jadvalidan ma'lumot o'qib bo'lmadi: " + (error instanceof Error ? error.message : String(error));
             await sendLog(message, { reply_to_message_id: msg.message_id });
             return;
         }
@@ -74,23 +73,17 @@ export async function registerBroadcastCommand(ctx: CommandContext<Context>) {
                     ers.push(data[i].tg_id);
 
                     if (error instanceof GrammyError && error.description.includes("bot was blocked by the user")) {
-                        await sendLog(`Foydalanuvchi ${data[i].tg_id} botni bloklagan.`, {
-                            reply_to_message_id: msg.message_id,
-                        });
+                        await sendLog(`Foydalanuvchi ${userLink(data[i])} botni bloklagan.`, { reply_to_message_id: msg.message_id });
                         await deactivator(data[i].tg_id);
+                        await changeStatus(data[i].tg_id, "has_blocked");
                     } else if (error instanceof GrammyError && error.description.includes("user is deactivated")) {
-                        await sendLog(`Foydalanuvchi ${data[i].tg_id} deleted account qilgan.`, {
-                            reply_to_message_id: msg.message_id,
-                        });
+                        await sendLog(`Foydalanuvchi ${userLink(data[i])} deleted account qilgan.`, { reply_to_message_id: msg.message_id });
                         await deactivator(data[i].tg_id);
+                        await changeStatus(data[i].tg_id, "deleted_account");
                     } else if (error instanceof Error) {
-                        await sendLog(`Xatolik yuz berdi (${data[i].tg_id}): \n${error.message}`, {
-                            reply_to_message_id: msg.message_id,
-                        });
+                        await sendLog(`Xatolik yuz berdi (${userLink(data[i])}): \n${error.message}`, { reply_to_message_id: msg.message_id });
                     } else {
-                        await sendLog(`Xatolik yuz berdi (${data[i].tg_id}): \n${error}`, {
-                            reply_to_message_id: msg.message_id,
-                        });
+                        await sendLog(`Xatolik yuz berdi (${userLink(data[i])}): \n${error}`, { reply_to_message_id: msg.message_id });
                     }
                 }
             }
@@ -106,4 +99,3 @@ export async function registerBroadcastCommand(ctx: CommandContext<Context>) {
         }
     });
 }
-
