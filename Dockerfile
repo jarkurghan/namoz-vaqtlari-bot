@@ -1,38 +1,34 @@
-# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
-FROM oven/bun:1 AS base
+# 1. Base Image with System Libraries
+FROM oven/bun:1.3 AS base
 WORKDIR /usr/src/app
+# These libraries (glib, nss, etc.) never change, keep them in base
+RUN bunx playwright install-deps chromium && rm -rf /var/lib/apt/lists/*
 
-# install dependencies into temp directory
-# this will cache them and speed up future builds
-FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
-RUN cd /temp/dev && bun install --frozen-lockfile
+# 2. Playwright & Browser Stage
+# This stage ONLY re-runs if package.json or bun.lock changes
+FROM base AS playwright-layer
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN bunx playwright install chromium
 
-# install with --production (exclude devDependencies)
-RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile --production
+# 3. Production Dependencies Stage
+FROM base AS build-prod
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
 
-# install Playwright Chromium (namoz vaqtlari islom.uz dan olinadi)
-ENV PLAYWRIGHT_BROWSERS_PATH=/temp/prod/ms-playwright
-RUN cd /temp/prod && bunx playwright install --with-deps chromium
-
-# copy production dependencies and source code into final image
+# 4. Final Release
 FROM base AS release
+# Copy the pre-installed browsers from stage 2
+COPY --from=playwright-layer /ms-playwright /ms-playwright
+# Copy production node_modules from stage 3
+COPY --from=build-prod /usr/src/app/node_modules ./node_modules
+# Copy source code (this changes most often)
 COPY . .
-COPY --from=install /temp/prod/node_modules node_modules
-COPY --from=install /temp/prod/ms-playwright /usr/src/app/ms-playwright
 
-ENV PLAYWRIGHT_BROWSERS_PATH=/usr/src/app/ms-playwright
-
-# Chromium uchun tizim kutubxonalari (libglib va boshqalar)
-RUN bunx playwright install-deps chromium
-
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN chown -R bun:bun /usr/src/app
 
-# run the app
 USER bun
 EXPOSE 3000/tcp
 ENTRYPOINT [ "bun", "run", "src/index.ts" ]
