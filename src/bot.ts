@@ -14,6 +14,7 @@ import { registerPrayertimeCallback } from "./handlers/action-prayertime-callbac
 import { registerBroadcastCommand } from "./handlers/register-broadcast-command";
 import { registerErrorHandler } from "./handlers/register-error-handler";
 import { registerTimeCallback } from "./handlers/select-time-callback";
+import { onHasBlocked } from "./handlers/on-has-blocked";
 import { autoRetry } from "@grammyjs/auto-retry";
 
 if (!BOT_TOKEN) throw new Error("BOT_TOKEN topilmadi!");
@@ -38,6 +39,7 @@ bot.hears("🕘 Бугунги намоз вақтлари", registerPrayertimeC
 bot.hears("⚙️ Sozlamalar", registerSettingsCallback);
 bot.hears("⚙️ Созламалар", registerSettingsCallback);
 bot.command("broadcast", registerBroadcastCommand);
+bot.on("my_chat_member", onHasBlocked);
 bot.catch(registerErrorHandler);
 
 export const handleUpdate = webhookCallback(bot, "hono");
