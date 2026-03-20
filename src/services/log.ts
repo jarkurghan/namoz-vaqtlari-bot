@@ -10,14 +10,16 @@ function escapeForTelegramHtml(text: string): string {
 export const sendLog = async (message: string, options?: LogOptions): Promise<void> => {
     try {
         const { parse_mode = "HTML", reply_to_message_id } = options || {};
-        const safeMessage = parse_mode === "HTML" ? escapeForTelegramHtml(message) : message;
+        
+        // const safeMessage = parse_mode === "HTML" ? escapeForTelegramHtml(message) : message;
+        
         if (reply_to_message_id) {
-            await bot.api.sendMessage(LOG_CHAT, safeMessage, {
+            await bot.api.sendMessage(LOG_CHAT, message, {
                 parse_mode: parse_mode,
                 reply_parameters: { message_id: reply_to_message_id },
             });
         } else {
-            await bot.api.sendMessage(LOG_CHAT, safeMessage, {
+            await bot.api.sendMessage(LOG_CHAT, message, {
                 parse_mode: parse_mode,
             });
         }
