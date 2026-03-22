@@ -46,7 +46,7 @@ export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
     if (data && (typeof data.time === "number" || typeof data.time === "string")) userData.time = data.time;
     if (data && data.status) userData.status = data.status;
 
-    if (userData.language && userData.city && userData.time && data?.status === "new") {
+    if (data && data.language && data.city && data.time && data?.status === "new") {
         userData.status = "active";
     }
 

@@ -18,7 +18,9 @@ export async function registerTimeCallback(ctx: CallbackQueryContext<Context>) {
         .where(eq(ptu.tg_id, String(tg_id)))
         .limit(1);
 
-    const [user] = await saveUser(ctx, { time, status: userStatus?.status as Status });
+    const { language, city } = userStatus;
+
+    const [user] = await saveUser(ctx, { language, city, time, status: userStatus?.status as Status });
 
     if (!user.language) {
         await ctx.deleteMessage().catch((err) => console.log(err));
