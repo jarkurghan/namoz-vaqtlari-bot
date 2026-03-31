@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { ADMIN_CHAT } from "../utils/constants";
 import { SaveUserData, Status } from "../utils/types";
-import { sendLog } from "./log";
+import { sendErrorLog } from "./log";
 import { User } from "../utils/types";
 import { ptu } from "../db/schema";
 import { CTX } from "../utils/types";
@@ -28,6 +28,11 @@ function mapDbUserToUser(row: PrayerTimeUserSelect): User {
 export function userLink(user: User): string {
     const fullName = `${user.first_name || "Noma'lum"} ${user.last_name || ""}`;
     return user.username ? `<a href="tg://resolve?domain=${user.username}">${fullName}</a>` : `<a href="tg://user?id=${user.tg_id}">${fullName}</a>`;
+}
+
+export function groupLink(chat: { id: number; title?: string; username?: string | null }): string {
+    const name = chat.title || "Noma'lum";
+    return chat.username ? `<a href="https://t.me/${chat.username}">${name}</a>` : name;
 }
 
 export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
@@ -75,11 +80,7 @@ export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
 
         return upsertedData.map(mapDbUserToUser);
     } catch (error) {
-        if (error instanceof Error) {
-            await sendLog(`User create qilib bo'lmadi (${user.id}): \n${error.message}`);
-        } else {
-            await sendLog(`User create qilib bo'lmadi (${user.id}): \n${error}`);
-        }
+        await sendErrorLog({ event: "User saqlashda", error, ctx });
         return [];
     }
 }

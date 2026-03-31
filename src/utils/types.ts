@@ -30,6 +30,7 @@ export type paramsTypeOfMakeMarks =
     | { key: "dashboard"; lang: number; city: number };
 
 export type LogOptions = { parse_mode?: ParseMode; reply_to_message_id?: number };
+export type ErrorLogOptions = { ctx?: Context; event: string; error: unknown; reply_to_message_id?: number; parse_mode?: ParseMode };
 
 export interface UserTimeData {
     date_text_uz: string;

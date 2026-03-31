@@ -1,8 +1,8 @@
 import type { CommandContext, Context } from "grammy";
 import { GrammyError, InlineKeyboard } from "grammy";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
-import { changeStatus } from "../services/deactivator";
-import { sendLog } from "../services/log";
+import { changeStatusOld } from "../services/deactivator";
+import { sendErrorLog, sendLog } from "../services/log";
 import { PrayerTimeUserSelect, mapDbUserToUser } from "../utils/types";
 import { ADMIN_ID, LOG_CHAT } from "../utils/constants";
 import { ptu } from "../db/schema";
@@ -74,10 +74,10 @@ export async function registerBroadcastCommand(ctx: CommandContext<Context>) {
 
                     if (error instanceof GrammyError && error.description.includes("bot was blocked by the user")) {
                         await sendLog(`Foydalanuvchi ${userLink(data[i])} botni bloklagan.`, { reply_to_message_id: msg.message_id });
-                        await changeStatus(data[i].tg_id, "has_blocked");
+                        await changeStatusOld(data[i].tg_id, "has_blocked");
                     } else if (error instanceof GrammyError && error.description.includes("user is deactivated")) {
                         await sendLog(`Foydalanuvchi ${userLink(data[i])} deleted account qilgan.`, { reply_to_message_id: msg.message_id });
-                        await changeStatus(data[i].tg_id, "deleted_account");
+                        await changeStatusOld(data[i].tg_id, "deleted_account");
                     } else if (error instanceof Error) {
                         await sendLog(`Xatolik yuz berdi (${userLink(data[i])}): \n${error.message}`, { reply_to_message_id: msg.message_id });
                     } else {
@@ -90,10 +90,6 @@ export async function registerBroadcastCommand(ctx: CommandContext<Context>) {
         const message = `✅ Sozlamalar bildirishnomalari yuborildi\n\n🎯 Yuborildi: ${scs.length}\n💣 Xato: ${ers.length}\n🏆 Jami: ${counter}`;
         await sendLog(message, { reply_to_message_id: msg.message_id });
     })().catch(async (error) => {
-        if (error instanceof Error) {
-            await sendLog(`Broadcast umumiy xatolik: ${error.message}`);
-        } else {
-            await sendLog(`Broadcast umumiy xatolik: ${String(error)}`);
-        }
+        await sendErrorLog({ event: "Broadcast umumiy xatolik", error, ctx });
     });
 }

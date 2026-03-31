@@ -5,7 +5,7 @@ import { UserTimeData } from "../utils/types";
 import { PrayerTimesSelect } from "../utils/types";
 import { PrayerTimeUserSelect } from "../utils/types";
 import { makeMessage } from "../services/make-message";
-import { changeStatus } from "../services/deactivator";
+import { changeStatusOld } from "../services/deactivator";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { and } from "drizzle-orm/sql/expressions/conditions";
 import { ptu } from "../db/schema";
@@ -79,9 +79,9 @@ export const sendPrayerTimes = async (): Promise<void> => {
         } catch (error: any) {
             const errorMsg = error.message || "";
             if (errorMsg.includes("bot was blocked by the user")) {
-                await changeStatus(user.tg_id, "has_blocked");
+                await changeStatusOld(user.tg_id, "has_blocked");
             } else if (errorMsg.includes("user is deactivated")) {
-                await changeStatus(user.tg_id, "deleted_account");
+                await changeStatusOld(user.tg_id, "deleted_account");
             } else {
                 await sendLog(`❗️ Xabar yuborishda xato: ${errorMsg}`);
             }

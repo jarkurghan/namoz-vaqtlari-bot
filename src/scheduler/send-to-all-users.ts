@@ -6,7 +6,7 @@ import { mapDbUserToUser } from "../utils/types";
 import { PrayerTimeUserSelect } from "../utils/types";
 import { broadcastMessageQadrKechasi } from "../services/make-reply-keyboard";
 import { makeDashboardReplyKeyboard } from "../services/make-reply-keyboard";
-import { changeStatus } from "../services/deactivator";
+import { changeStatusOld } from "../services/deactivator";
 import { userLink } from "../services/save-user";
 import { GrammyError } from "grammy";
 
@@ -53,13 +53,13 @@ export const sendToAllUsers = async (): Promise<void> => {
 
                 if (description.includes("bot was blocked by the user")) {
                     await sendLog(`Foydalanuvchi botni bloklagan (${userLink(user)}): \n${description}`);
-                    await changeStatus(user.tg_id, "has_blocked");
+                    await changeStatusOld(user.tg_id, "has_blocked");
                 } else if (description.includes("user is deactivated")) {
                     await sendLog(`O'chirilgan hisob (${userLink(user)}): \n${description}`);
-                    await changeStatus(user.tg_id, "deleted_account");
+                    await changeStatusOld(user.tg_id, "deleted_account");
                 } else {
                     await sendLog(`Xabar yuborishda xatolik (${userLink(user)}): \n${description}`);
-                    await changeStatus(user.tg_id, "other");
+                    await changeStatusOld(user.tg_id, "other");
                 }
             } else if (error instanceof Error) {
                 await sendLog(`Xabar yuborishda xatolik (${userLink(user)}): \n${error.message}`);
