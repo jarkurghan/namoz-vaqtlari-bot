@@ -40,7 +40,7 @@ export async function changeStatus(ctx: Context, status: Status): Promise<void> 
         const whereCondition = eq(ptu.tg_id, String(tg_id));
         const [updated] = await db.update(ptu).set({ status }).where(whereCondition).returning();
 
-        if (updated) {
+        if (!updated) {
             const msg =
                 `❗️ <b>Xato:</b>\n\n` +
                 `🔦 Tafsilot: Status o'zgartirilmadi (foydalanuvchi topilmadi)\n` +
@@ -54,7 +54,7 @@ export async function changeStatus(ctx: Context, status: Status): Promise<void> 
                 `👤 Ism: ${userlink}\n` +
                 `🆔 User ID: <code>${tg_id}</code>\n` +
                 `🔦 Yangi status: ${status}\n` +
-                `🤖 Bot: @insta_yuklagich_bot`;
+                `🤖 Bot: @bugungi_namoz_bot`;
             await sendAdmin(msg);
         }
     } catch (error) {
