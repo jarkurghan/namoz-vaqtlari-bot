@@ -63,12 +63,12 @@ export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
             .limit(1);
 
         if (!existingUser) {
-            const utm = data?.utm || "-";
+            const utm = data?.utm || "Xudo biladi";
             const username = user.username ? `@${user.username}` : "Noma'lum";
             const userlink = userLink(userData);
             const msg =
                 `🆕 Yangi foydalanuvchi:\n\n👤 Ism: ${userlink}\n🔗 Username: ${username}\n` +
-                `🆔 ID: <code>${user.id}</code>\n🚪 Source: ${utm}\n🤖 Bot: @bugungi_namoz_bot`;
+                `🆔 ID: <code>${user.id}</code>\n🚪 Qayerdan kelgan: ${utm}\n🤖 Bot: @bugungi_namoz_bot`;
             await bot.api.sendMessage(ADMIN_CHAT, msg, { parse_mode: "HTML" });
         }
 

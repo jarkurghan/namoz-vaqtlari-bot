@@ -89,7 +89,7 @@ export const sendPrayerTimes = async (): Promise<void> => {
     }
 
     console.log(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${typedUsers.length - counter}`);
-    await sendLog(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${typedUsers.length - counter}`);
+    // await sendLog(`✅ Namoz vaqtlari yuborildi\n\n🕐 Yuborishlar: ${counter}\n💣 Xato: ${typedUsers.length - counter}`);
 };
 
 async function main() {
