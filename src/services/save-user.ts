@@ -63,7 +63,7 @@ export async function saveUser(ctx: CTX, data?: SaveUserData): Promise<User[]> {
             .limit(1);
 
         if (!existingUser) {
-            const utm = data?.utm || "Xudo biladi";
+            const utm = data?.utm || "Xudo biladi 🤷‍♂️";
             const username = user.username ? `@${user.username}` : "Noma'lum";
             const userlink = userLink(userData);
             const msg =
