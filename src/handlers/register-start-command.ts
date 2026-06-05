@@ -1,15 +1,20 @@
 import type { CommandContext, Context } from "grammy";
 import { makeDashboardReplyKeyboard } from "../services/make-reply-keyboard";
 import { makeMarks, MESSAGES } from "../services/make-keyboard";
+import { getStartPayload } from "../services/start-payload";
+import { objPayload } from "../services/start-payload";
+import { findUtm } from "../services/start-payload";
+import { sendErrorLog } from "../services/log";
 import { saveUser } from "../services/save-user";
 import { User } from "../utils/types";
 import { bot } from "../bot";
-import { sendErrorLog } from "../services/log";
 
 export async function registerStartCommand(ctx: CommandContext<Context>) {
     try {
-        const payload = ctx.match;
-        const utm = payload.slice(payload.indexOf("utm-") + 4);
+        const payload = getStartPayload(ctx);
+        const payloadObj = objPayload(payload);
+
+        const utm = findUtm(payloadObj);
 
         const [user]: User[] = await saveUser(ctx, { utm });
 
