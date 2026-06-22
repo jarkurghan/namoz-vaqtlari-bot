@@ -30,6 +30,13 @@ export function findUtm(obj: { [key: string]: string }): string {
     if (!utm) return "";
     else if (utm === "karyera") return "@meni_botlarim";
     else if (utm.includes("aniuzbot")) return "@aniuz_bot";
+    else if (utm === "uz_multfilm_bot") {
+        if (obj.broadcast_date) return `@uz_multfilm_bot\n🚪 Broadcast: <code>${obj.broadcast_date.replaceAll("_", ".")}</code>`;
+        else return "@uz_multfilm_bot";
+    } else if (utm === "uz_multfilm_bot_2") {
+        if (obj.broadcast_date) return `@uz_multfilm_bot 2\n🚪 Broadcast: <code>${obj.broadcast_date.replaceAll("_", ".")}</code>`;
+        else return "@uz_multfilm_bot";
+    } else if (utm.includes("uz_multfilm_bot")) return "@uz_multfilm_bot";
     else return utm;
 }
 
