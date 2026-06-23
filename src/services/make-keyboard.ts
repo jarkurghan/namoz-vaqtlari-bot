@@ -8,10 +8,10 @@ import { User } from "../utils/types";
 function getTimeKeyboard(lang: number, is_back?: boolean) {
     const keyboard = new InlineKeyboard();
 
-    for (let i = 1; i < 24; i++) {
+    for (let i = 1; i < 13; i++) {
         const hour = i.toString().padStart(2, "0");
         keyboard.text(`${hour}:00`, `time_${hour}`);
-        if (i % 4 === 0) keyboard.row();
+        if (i % 3 === 0) keyboard.row();
     }
 
     keyboard.row();
