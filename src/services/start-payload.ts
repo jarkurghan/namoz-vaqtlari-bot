@@ -36,12 +36,12 @@ export function findUtm(obj: { [key: string]: string }): string {
     } else if (utm === "uz_multfilm_bot_2") {
         if (obj.broadcast_date) return `@uz_multfilm_bot 2\n🚪 Broadcast: <code>${obj.broadcast_date.replaceAll("_", ".")}</code>`;
         else return "@uz_multfilm_bot";
-    } else if (utm === "UzKinoMov1eBot") {
-        if (obj.broadcast_date) return `@UzKinoMov1eBot (@bekk_media)\n🚪 Broadcast: <code>${obj.broadcast_date.replaceAll("_", ".")}</code>`;
-        else return "@UzKinoMov1eBot";
-    } else if (utm === "UzKinoMov1eBot_2") {
-        if (obj.broadcast_date) return `@UzKinoMov1eBot 2\n🚪 Broadcast: <code>${obj.broadcast_date.replaceAll("_", ".")}</code>`;
-        else return "@UzKinoMov1eBot";
+    } else if (utm === "uzkinomov1ebot") {
+        if (obj.broadcast_date) return `@uzkinomov1ebot (@bekk_media)\n🚪 Broadcast: <code>${obj.broadcast_date.replaceAll("_", ".")}</code>`;
+        else return "@uzkinomov1ebot";
+    } else if (utm === "uzkinomov1ebot_2") {
+        if (obj.broadcast_date) return `@uzkinomov1ebot 2\n🚪 Broadcast: <code>${obj.broadcast_date.replaceAll("_", ".")}</code>`;
+        else return "@uzkinomov1ebot";
     } else if (utm.includes("uz_multfilm_bot")) return "@uz_multfilm_bot";
     else return utm;
 }
