@@ -27,16 +27,19 @@ function trim(str?: string | null): string {
 function parseDate(dateTextUz: string, dateTextCyrl: string): { date_text_uz: string; date_text_cyrl: string } {
     const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "");
     const low = (s: string) => (s ? s.toLowerCase() : "");
+    const norm = (s: string) => s.replace(/\s+/g, " ").trim();
 
-    const reUz = /(\d{4})\s+yil\s+(\d{1,2})\s+(\S+)\s+\|\s+(\d{4})\s+yil\s+(\d{1,2})\s+(\S+),\s*(\S+)/i;
-    const reCyrl = /(\d{4})\s+йил\s+(\d{1,2})\s+(\S+)\s+\|\s+(\d{4})\s+йил\s+(\d{1,2})\s+(\S+),\s*(\S+)/i;
+    // "1448 yil 14 rabi'ul avval | 2026 yil 27 avgust, payshanba"
+    // Hijriy oy ko'p so'zli bo'lishi mumkin (rabi'ul avval, jumadul oxir, ...)
+    const reUz = /(\d{4})\s+yil\s+(\d{1,2})\s+(.+?)\s*\|\s*(\d{4})\s+yil\s+(\d{1,2})\s+(\S+)\s*,\s*(\S+)/i;
+    const reCyrl = /(\d{4})\s+йил\s+(\d{1,2})\s+(.+?)\s*\|\s*(\d{4})\s+йил\s+(\d{1,2})\s+(\S+)\s*,\s*(\S+)/i;
 
-    const mUz = dateTextUz.match(reUz);
-    const mCyrl = dateTextCyrl.match(reCyrl);
+    const mUz = norm(dateTextUz).match(reUz);
+    const mCyrl = norm(dateTextCyrl).match(reCyrl);
     if (!mUz || !mCyrl) return { date_text_uz: dateTextUz, date_text_cyrl: dateTextCyrl };
 
-    const date_text_uz = [cap(mUz[7]!), `${mUz[5]!}-${low(mUz[6]!)} ${mUz[4]!}`, `${cap(mUz[3]!)} ${mUz[2]!}, ${mUz[1]!}`].join("\n");
-    const date_text_cyrl = [cap(mCyrl[7]!), `${mCyrl[5]!}-${low(mCyrl[6]!)} ${mCyrl[4]!}`, `${cap(mCyrl[3]!)} ${mCyrl[2]!}, ${mCyrl[1]!}`].join("\n");
+    const date_text_uz = [cap(mUz[7]!), `${mUz[5]!}-${low(mUz[6]!)} ${mUz[4]!}`, `${cap(mUz[3]!.trim())} ${mUz[2]!}, ${mUz[1]!}`].join("\n");
+    const date_text_cyrl = [cap(mCyrl[7]!), `${mCyrl[5]!}-${low(mCyrl[6]!)} ${mCyrl[4]!}`, `${cap(mCyrl[3]!.trim())} ${mCyrl[2]!}, ${mCyrl[1]!}`].join("\n");
 
     return { date_text_uz, date_text_cyrl };
 }
