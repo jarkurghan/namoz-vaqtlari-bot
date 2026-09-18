@@ -23,6 +23,14 @@ export async function broadcastMessageCustomActivate(lang: number) {
     }
 }
 
+export async function broadcastMessageTimeTo9(lang: number) {
+    if (lang === 1) {
+        return "Намоз вақтлари юбориш вақти 9:00 қилиб белгиланди! Хоҳласангиз, созламалар бўлимида ўзингизга қулай вақтга ўзгаритишингиз мумкин.";
+    } else {
+        return "Namoz vaqtlari yuborish vaqti 9:00 qilib belgilandi! Xohlasangiz, sozlamalar bo'limida o'zingizga qulay vaqtga o'zgaritishingiz mumkin.";
+    }
+}
+
 // export function broadcastMessageIdFitr(lang: number): string {
 //     if (lang === 1) {
 //         return "Рамазон ҳайити муборак бўлсин! 🎉🎉🎉";

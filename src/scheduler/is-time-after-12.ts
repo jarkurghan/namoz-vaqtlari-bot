@@ -3,16 +3,16 @@ import { db, sql } from "../db";
 import { pt, ptu } from "../db/schema";
 import { sendLog } from "../services/log";
 import { mapDbUserToUser } from "../utils/types";
-import { broadcastMessageCustomActivate } from "../services/make-reply-keyboard";
+import { broadcastMessageTimeTo9 } from "../services/make-reply-keyboard";
 import { makeDashboardReplyKeyboard } from "../services/make-reply-keyboard";
-import { and, isNotNull, isNull } from "drizzle-orm/sql/expressions/conditions";
+import { and, gt, isNotNull } from "drizzle-orm/sql/expressions/conditions";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { changeStatusOld } from "../services/deactivator";
 import { userLink } from "../services/save-user";
 import { GrammyError } from "grammy";
 
-export const customActivate = async (): Promise<void> => {
-    const condition = and(eq(ptu.status, "new"), isNull(ptu.time), isNotNull(ptu.city));
+export const setTimeAfter12To9 = async (): Promise<void> => {
+    const condition = and(eq(ptu.status, "active"), gt(ptu.time, 12), isNotNull(ptu.city));
     const rows = await db.select().from(ptu).where(condition);
     const users = rows.map(mapDbUserToUser);
 
@@ -26,11 +26,11 @@ export const customActivate = async (): Promise<void> => {
     for (const user of users) {
         try {
             const lang = Number(user.language) === 1 ? 1 : 2;
-            const message = await broadcastMessageCustomActivate(lang);
+            const message = await broadcastMessageTimeTo9(lang);
             const replyMarkup = await makeDashboardReplyKeyboard(lang, user.city, activeCities);
 
-            const condition = eq(ptu.tg_id, String(user.tg_id));
-            await db.update(ptu).set({ status: "active", time: 2 }).where(condition);
+            const userCondition = eq(ptu.tg_id, String(user.tg_id));
+            await db.update(ptu).set({ time: 9 }).where(userCondition);
             await bot.api.sendMessage(user.tg_id, message, { reply_markup: replyMarkup, parse_mode: "HTML" });
             sent++;
         } catch (error) {
@@ -57,14 +57,14 @@ export const customActivate = async (): Promise<void> => {
         }
     }
 
-    const summary = `✅ Vaqt belgilanmagan foydalanuvchilar uchun 02:00 belgilandi\n\n🎯 Yuborildi: ${sent}\n💣 Xato: ${failed}\n🏆 Jami: ${sent + failed}`;
+    const summary = `✅ 12:00 dan keyingi vaqtlar 9:00 ga o'zgartirildi\n\n🎯 Yuborildi: ${sent}\n💣 Xato: ${failed}\n🏆 Jami: ${sent + failed}`;
     console.log(summary);
     await sendLog(summary);
 };
 
 async function main() {
     try {
-        await customActivate();
+        await setTimeAfter12To9();
         await sql.end({ timeout: 5 });
     } catch (err) {
         console.error(err);
