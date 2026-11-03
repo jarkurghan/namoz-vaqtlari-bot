@@ -24,6 +24,19 @@ function trim(str?: string | null): string {
     return str?.trim() ?? "";
 }
 
+// islom.uz lotin yozuvi: O‘→Ö, G‘→Ğ, Sh→Ş, Ch→Ç. Bot hozirgi alifboda qoladi.
+function toCurrentAlphabet(text: string): string {
+    return text
+        .replaceAll("Ö", "O\u2018")
+        .replaceAll("ö", "o\u2018")
+        .replaceAll("Ğ", "G\u2018")
+        .replaceAll("ğ", "g\u2018")
+        .replaceAll("Ş", "Sh")
+        .replaceAll("ş", "sh")
+        .replaceAll("Ç", "Ch")
+        .replaceAll("ç", "ch");
+}
+
 function parseDate(dateTextUz: string, dateTextCyrl: string): { date_text_uz: string; date_text_cyrl: string } {
     const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "");
     const low = (s: string) => (s ? s.toLowerCase() : "");
@@ -62,9 +75,9 @@ async function getPrayerTimesFromIslomUz(cityIds: string[]) {
 
         await langBtn.click();
         await new Promise((resolve) => setTimeout(resolve, 400));
-        await page.getByText("O'zbek", { exact: true }).first().click();
+        await page.getByText("Özbek", { exact: true }).first().click();
         await new Promise((resolve) => setTimeout(resolve, 800));
-        const dateTextUz = await page.locator(".header-top__date").first().textContent().then(trim);
+        const dateTextUz = await page.locator(".header-top__date").first().textContent().then(trim).then(toCurrentAlphabet);
 
         await langBtn.click();
         await new Promise((resolve) => setTimeout(resolve, 400));
